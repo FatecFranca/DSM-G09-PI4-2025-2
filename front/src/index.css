@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+/* 🌈 Tema personalizado OuvIoT (cores usadas no DaisyUI) */
+:root {
+  --bg: #ffffff;
+  --text: #0b1021;
+}
+
+/* Cores de fundo personalizadas opcionais — usadas em containers */
+html[data-theme='ouviot'] {
+  --color-green: #8AC926;
+  --color-yellow: #FFCA3A;
+  --color-red: #FF595E;
+  --color-blue: #1982C4;
+  --color-purple: #6A4C93;
+}
+
+/* Utilitários extras opcionais (não entram em conflito com DaisyUI) */
+.container-max {
+  @apply max-w-7xl mx-auto px-4 md:px-8;
+}
+
+.card-ouviot {
+  @apply bg-[color:var(--bg)] text-[color:var(--text)] rounded-2xl shadow-lg border border-black/5 p-6;
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #6A4C93, #8AC926);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
