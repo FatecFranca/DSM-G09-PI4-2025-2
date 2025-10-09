@@ -46,3 +46,5 @@ src/
  ├── main.jsx          # Ponto de entrada da aplicação
  └── App.jsx           # Rotas e estrutura geral
 
+*****
+
