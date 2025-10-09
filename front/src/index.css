@@ -2,7 +2,7 @@
 
 /* 🌈 Tema personalizado OuvIoT (cores usadas no DaisyUI) */
 :root {
-  --bg: #ffffff;
+  --bg: #FFFFFF;
   --text: #0b1021;
 }
 
@@ -25,7 +25,7 @@ html[data-theme='ouviot'] {
 }
 
 .gradient-text {
-  background: linear-gradient(90deg, #6A4C93, #8AC926);
+  background: linear-gradient(90deg, #FF595E, #FFCA3A, #8AC926);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

@@ -1,6 +1,18 @@
 import { Link } from "react-router-dom";
+import React, { useEffect } from "react";
 
 export default function Home() {
+  useEffect(() => {
+  const interval = setInterval(() => {
+    document.querySelectorAll(".bar").forEach((el) => {
+      const newHeight = Math.max(12, Math.round(Math.random() * 150));
+      el.style.height = `${newHeight}px`;
+    });
+  }, 500);
+
+  return () => clearInterval(interval);
+}, []);
+
   return (
     <section className="container-max py-16">
       <div className="grid md:grid-cols-2 gap-10 items-center">
@@ -19,21 +31,32 @@ export default function Home() {
         </div>
 
         <div className="card p-6 md:p-8">
-          <div className="h-48 rounded-xl bg-white/40 flex items-end p-3 gap-1">
-            {Array.from({ length: 40 }).map((_, i) => {
-              const h = Math.max(12, Math.round(Math.random() * 150));
-              return (
-                <div
-                  key={i}
-                  style={{ height: h }}
-                  className="w-2 bg-[color:var(--text)]/40 rounded-t"
-                ></div>
-              );
-            })}
-          </div>
-          <p className="mt-3 text-sm opacity-70">* Visualização ilustrativa</p>
-        </div>
-      </div>
+              <div className="h-48 rounded-xl bg-white/40 flex items-end p-3 gap-1">
+                {Array.from({ length: 40 }).map((_, i) => {
+                  const h = Math.max(12, Math.round(Math.random() * 150));
+
+                  let color = "#8AC926"; // verde (baixo)
+                  if (h > 100) color = "#FF595E"; // vermelho (alto)
+                  else if (h > 60) color = "#FFCA3A"; // amarelo (médio)
+
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        height: h,
+                        backgroundColor: color,
+                        borderRadius: "6px 6px 0 0",
+                        transition: "height 0.3s ease, background-color 0.3s ease",
+                      }}
+                      className="bar w-2 rounded-t"
+                    ></div>
+                  );
+                })}
+
+              </div>
+                      <p className="mt-3 text-sm opacity-70">* Visualização ilustrativa</p>
+                    </div>
+            </div>
 
       <div className="mt-14 grid md:grid-cols-3 gap-6">
         {[
@@ -48,5 +71,7 @@ export default function Home() {
         ))}
       </div>
     </section>
+  
   );
+  
 }
