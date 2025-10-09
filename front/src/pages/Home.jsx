@@ -8,7 +8,7 @@ export default function Home() {
       const newHeight = Math.max(12, Math.round(Math.random() * 150));
       el.style.height = `${newHeight}px`;
     });
-  }, 500);
+  },500);
 
   return () => clearInterval(interval);
 }, []);
