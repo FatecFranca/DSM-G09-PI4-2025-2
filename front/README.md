@@ -46,3 +46,7 @@ src/
  ├── main.jsx          # Ponto de entrada da aplicação
  └── App.jsx           # Rotas e estrutura geral
 
+*****
+acompanhe o projeto web online através do deploy:
+
+https://ouviout.netlify.app/
