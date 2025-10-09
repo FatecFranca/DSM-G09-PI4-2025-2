@@ -40,7 +40,4 @@ Auxílio complementar e dúvidas com ferramentas de IA.
 💡 “O silêncio é o primeiro passo para ouvir melhor.”
 
 
-*****
-acompanhe o projeto online através do deploy:
 
-https://ouviout.netlify.app/
