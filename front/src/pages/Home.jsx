@@ -22,12 +22,10 @@ export default function Home() {
             OuvIoT: <span className="gradient-text">Monitoramento inteligente</span> de ruído em salas de aula.
           </h2>
           <p className="mt-4 opacity-90 text-lg">
-            Visualize níveis de som em tempo real, receba alertas e acompanhe relatórios para promover ambientes mais silenciosos e saudáveis.
+            Monitore o som em tempo real e explore dashboards que transformam dados em insights que apoiam gestores e educadores na tomada de decisões para aprimorar o ambiente escolar.
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link to="/sobre" className="btn-ghost">Como funciona</Link>
-            <Link to="/dashboard" className="btn-green">Ir para o Dashboard</Link>
-          </div>
+
+
         </div>
 
         <div className="card p-6 md:p-8">
@@ -60,9 +58,9 @@ export default function Home() {
 
       <div className="mt-14 grid md:grid-cols-3 gap-6">
         {[
-          ["Por que importa?", "Melhora foco, reduz estresse e organiza rotinas."],
-          ["Relatórios", "Compare turmas e períodos e identifique padrões de ruído."],
-          ["Gamificação", "Mais silêncio, mais pontos: engaje a turma de forma positiva!"],
+          [<Link to="/sobre" className="btn-ghost">Por que importa?</Link>, "Melhora foco, reduz estresse e organiza rotinas."],
+          [<Link to="/dashboard" className="btn-green">Relatórios</Link>, "Compare turmas e períodos e identifique padrões de ruído."],
+          ["Gamificação(somente App Mobile)", "Mais silêncio, mais pontos: engaje a turma de forma positiva!"],
         ].map(([t, d], i) => (
           <div key={i} className="card p-6">
             <h3 className="font-semibold text-lg">{t}</h3>

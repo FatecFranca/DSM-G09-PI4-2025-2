@@ -16,13 +16,12 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-40 bg-[color:var(--bg)]/80 backdrop-blur border-b border-black/10">
       <div className="container-max py-3 flex items-center justify-between">
-        {/* Logo e nome */}
+
         <Link to="/" className="flex items-center gap-2">
           <img src={logoT} alt="Logo OuvIoT" className="w-9 h-9 drop-shadow-md hover:scale-105 transition-transform" />
           <span className="text-2xl font-bold gradient-text">OuvIoT</span>
         </Link>
 
-        {/* Links principais */}
         <nav className="hidden md:flex items-center gap-6">
           <NavLink to="/" end className={({ isActive }) => (isActive ? active : nav)}>
             Home
