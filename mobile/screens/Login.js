@@ -48,6 +48,11 @@ export default function Login({ navigation }) {
 
   const handleCadastro = () => navigation.navigate("Cadastro");
 
+  const handleConfiguracoes = () => {
+  navigation.navigate("Configuracoes");
+};
+
+
   // Alturas das barras animadas
   const altura1 = animBarras.interpolate({ inputRange: [0, 1], outputRange: [40, 80] });
   const altura2 = animBarras.interpolate({ inputRange: [0, 1], outputRange: [60, 30] });
@@ -56,14 +61,22 @@ export default function Login({ navigation }) {
 
   return (
     <LinearGradient colors={["#FBFCF5", "#fdfdfd"]} style={styles.container}>
+      {/* Logo */}
       <Image source={require("../assets/images/logo.png")} style={styles.logo} />
 
+      {/* Botão Configurações ⚙️ */}
+      <TouchableOpacity style={styles.configuracoes} onPress={handleConfiguracoes}>
+        <Text style={styles.configEmoji}>⚙️</Text>
+      </TouchableOpacity>
+
+      {/* Título */}
       <Text style={styles.titulo}>
         <Text style={{ color: "#8AC926" }}>Ouv</Text>
         <Text style={{ color: "#FFCA3A" }}>Io</Text>
         <Text style={{ color: "#FF595E" }}>T</Text> App
       </Text>
 
+      {/* Inputs */}
       <TextInput
         style={styles.input}
         placeholder="Digite seu e-mail"
@@ -80,6 +93,7 @@ export default function Login({ navigation }) {
         onChangeText={setSenha}
       />
 
+      {/* Botões */}
       <TouchableOpacity style={styles.botaoEntrar} onPress={handleLogin}>
         <Text style={styles.textoBotao}>Entrar</Text>
       </TouchableOpacity>
@@ -88,7 +102,7 @@ export default function Login({ navigation }) {
         <Text style={styles.textoCadastro}>Cadastrar</Text>
       </TouchableOpacity>
 
-      {/* Barras ilustrativas */}
+      {/* Equalizador de barras ilustrativo */}
       <View style={styles.barrasContainer}>
         <Animated.View style={[styles.barra, { height: altura1, backgroundColor: "#8AC926" }]} />
         <Animated.View style={[styles.barra, { height: altura2, backgroundColor: "#FFCA3A" }]} />
@@ -105,6 +119,15 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3, },
+  configuracoes: {
+    position: "absolute",
+    top: 50,
+    right: 30,
+  },
+  configEmoji: {
+    fontSize: 24,
+    color: "#6A4C93",
+  },
   titulo: { fontSize: 26, fontWeight: "bold", marginBottom: 30,  },
   input: {
     width: "80%",

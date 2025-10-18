@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -18,6 +19,7 @@ export default function Cadastro({ navigation }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [turma, setTurma] = useState("");
+  const [menuVisivel, setMenuVisivel] = useState(false);
 
   const salvar = async () => {
     if (modo === "usuario" && (!nome || !email || !senha)) {
@@ -47,10 +49,61 @@ export default function Cadastro({ navigation }) {
       {/* Logo no canto superior */}
       <Image source={require("../assets/images/logo.png")} style={styles.logo} />
 
+
+
       {/* Botão voltar */}
       <TouchableOpacity style={styles.voltar} onPress={() => navigation.navigate("Login")}>
         <Ionicons name="arrow-back-circle" size={34} color="#6A4C93" />
       </TouchableOpacity>
+    
+    {/* Botão de menu ☰ */}
+      <TouchableOpacity
+        style={styles.menuBotao}
+        onPress={() => setMenuVisivel(!menuVisivel)}
+      >
+        <Text style={styles.menuEmoji}>☰</Text>
+      </TouchableOpacity>
+
+      {/* Modal de Menu */}
+      <Modal
+        transparent
+        visible={menuVisivel}
+        animationType="fade"
+        onRequestClose={() => setMenuVisivel(false)}
+>
+        <View style={styles.menuFundo} pointerEvents="box-none">
+          {/* Fecha o menu ao clicar fora OU ao clicar de novo no botão ☰ */}
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setMenuVisivel(false)}
+          />
+          <View style={styles.menuContainer}>
+            {["Login", "SalaAmbiente", "Gamificacao", "Relatorios", "Cadastro", "Configuracoes"].map(
+              (tela, i) => (
+                <TouchableOpacity
+                  key={i}
+                  onPress={() => {
+                    setMenuVisivel(false);
+                    navigation.navigate(tela);
+                  }}
+                  style={styles.menuItem}
+                >
+                      <Text style={styles.menuTexto}>
+                        {tela === "Login" ? "🏠 Home"
+                          : tela === "SalaAmbiente" ? "▶️ Sala Ambiente"
+                          : tela === "Gamificacao" ? "🎮 Gamificação"
+                          : tela === "Relatorios" ? "📊 Relatórios"
+                          : tela === "Cadastro" ? "🧾 Cadastro"
+                          : tela === "Configuracoes" ? "⚙️ Configurações"
+                          : tela}
+                      </Text>
+                  </TouchableOpacity>
+                )
+              )}
+            </View>
+          </View>
+        </Modal>
 
       {/* Título da tela */}
       <Text style={styles.titulo}>Cadastro</Text>
@@ -145,6 +198,28 @@ const styles = StyleSheet.create({
     top: 120,
     left: 25,
   },
+   menuBotao: { position: "absolute", top: 50, right: 25 },
+  menuEmoji: { fontSize: 26, color: "#6A4C93" },
+  menuFundo: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.1)",
+    justifyContent: "flex-start",
+    alignItems: "flex-end",
+    paddingTop: 90,
+    paddingRight: 15,
+  },
+  menuContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    width: 180,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  menuItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: "#eee" },
+  menuTexto: { fontSize: 16, color: "#6A4C93", fontWeight: "600" },
+ 
   titulo: {
     marginTop: 10,
     fontSize: 26,
