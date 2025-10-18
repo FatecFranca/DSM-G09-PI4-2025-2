@@ -28,7 +28,7 @@ export default function Configuracoes({ navigation }) {
     carregarTurmas();
   }, []);
 
-  // Confirmação antes de apagar usuário
+  // Confirmação antes de apagar  usuário
   const confirmarApagarUsuario = () => {
     if (!email.trim()) {
       Alert.alert("Aviso", "Digite o e-mail completo do usuário para confirmar a exclusão.");

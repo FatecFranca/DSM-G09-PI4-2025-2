@@ -105,6 +105,7 @@ export default function Cadastro({ navigation }) {
           </View>
         </Modal>
 
+
       {/* Título da tela */}
       <Text style={styles.titulo}>Cadastro</Text>
 
