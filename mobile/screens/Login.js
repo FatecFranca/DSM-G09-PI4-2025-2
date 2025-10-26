@@ -9,6 +9,7 @@ import {
   Animated,
   Easing,
 } from "react-native";
+import api from "../services/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -38,13 +39,26 @@ export default function Login({ navigation }) {
   }, []);
 
   const handleLogin = async () => {
-    if (!email || !senha) {
-      alert("Preencha e-mail e senha!");
-      return;
+  if (!email || !senha) {
+    alert("Preencha e-mail e senha!");
+    return;
+  }
+
+  try {
+    const resposta = await api.post("/login", { email, senha });
+    const usuario = resposta.data.usuario;
+
+    if (usuario) {
+      await AsyncStorage.setItem("usuario", usuario.nome);
+      alert("Login realizado com sucesso!");
+      navigation.navigate("SalaAmbiente");
+    } else {
+      alert(resposta.data.message || "Usuário ou senha incorretos.");
     }
-    await AsyncStorage.setItem("usuario", email);
-    navigation.navigate("SalaAmbiente");
-  };
+  } catch (erro) {
+    alert(erro.response?.data?.message || "Erro ao conectar com o servidor.");
+  }
+};
 
   const handleCadastro = () => navigation.navigate("Cadastro");
 

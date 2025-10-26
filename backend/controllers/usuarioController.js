@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 
 export const criarUsuario = async (req, res) => {
   try {
+    console.log("📦 Recebido do app:", req.body);
     const { nome, email, senha } = req.body;
 
     // Verifica se já existe o e-mail
@@ -17,6 +18,7 @@ export const criarUsuario = async (req, res) => {
       email,
       senha: senhaCriptografada,
     });
+    
 
     res.status(201).json({ message: "Usuário cadastrado com sucesso!", usuario: novoUsuario });
   } catch (error) {

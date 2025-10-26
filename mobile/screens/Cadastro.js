@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import api from "../services/api";
+
 import {
   View,
   Text,
@@ -22,24 +24,43 @@ export default function Cadastro({ navigation }) {
   const [menuVisivel, setMenuVisivel] = useState(false);
 
   const salvar = async () => {
-    if (modo === "usuario" && (!nome || !email || !senha)) {
-      alert("Preencha todos os campos do usuário!");
-      return;
-    }
-    if (modo === "turma" && !turma) {
-      alert("Preencha o nome da turma!");
+if (modo === "usuario") {
+  if (!nome || !email || !senha) {
+    alert("Preencha todos os campos do usuário!");
+    return;
+  }
+
+  try {
+    console.log("🔗 Enviando para:", api.defaults.baseURL + "/usuarios");
+
+    const resposta = await api.post("/usuarios", {
+      nome,
+      email,
+      senha,
+    });
+
+    alert(resposta.data.message);
+    navigation.navigate("Login");
+  } catch (erro) {
+    console.error("❌ Erro ao cadastrar usuário:", erro.response?.data || erro.message);
+    alert(erro.response?.data?.message || "Erro ao cadastrar usuário.");
+  }
+
+  } else {
+    if (!turma) {
+      alert("Informe o nome da turma!");
       return;
     }
 
-    const dados =
-      modo === "usuario"
-        ? { tipo: "usuario", nome, email, senha }
-        : { tipo: "turma", nome: turma };
-
-    await AsyncStorage.setItem("cadastro", JSON.stringify(dados));
-    alert("Cadastro salvo com sucesso!");
-    navigation.navigate("SalaAmbiente");
-  };
+    try {
+      const resposta = await api.post("/salas", { nome: turma });
+      alert("Turma cadastrada com sucesso!");
+      navigation.navigate("SalaAmbiente");
+    } catch (erro) {
+      alert("Erro ao cadastrar turma.");
+    }
+  }
+};
 
   return (
     <KeyboardAvoidingView
