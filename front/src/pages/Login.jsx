@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Login() {
-  const [user, setUser] = useState("");
-  const [pass, setPass] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -12,14 +12,27 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
-    if (user && pass) {
-      localStorage.setItem("ouviot_user", JSON.stringify({ user }));
-      navigate(from, { replace: true });
-    } else {
-      alert("Preencha usuário e senha.");
+
+    try {
+      const response = await fetch("http://localhost:5000/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, senha }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem("ouviot_user", JSON.stringify(data.user));
+        navigate(from, { replace: true });
+      } else {
+        alert(data.error || "Erro ao fazer login.");
+      }
+    } catch (err) {
+      alert("Erro de conexão com o servidor.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -32,12 +45,13 @@ export default function Login() {
 
         <div className="mt-6 space-y-4">
           <div>
-            <label className="text-sm opacity-80">Usuário</label>
+            <label className="text-sm opacity-80">E-mail</label>
             <input
+              type="email"
               className="mt-1 w-full rounded-xl bg-[color:var(--bg)] border border-black/10 px-4 py-2"
-              value={user}
-              onChange={(e) => setUser(e.target.value)}
-              placeholder="ex: professora.ana"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="ex: prof.ana@gmail.com"
             />
           </div>
           <div>
@@ -45,14 +59,24 @@ export default function Login() {
             <input
               type="password"
               className="mt-1 w-full rounded-xl bg-[color:var(--bg)] border border-black/10 px-4 py-2"
-              value={pass}
-              onChange={(e) => setPass(e.target.value)}
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
               placeholder="••••••••"
             />
           </div>
-          <button type="submit" className="btn-primary w-full" disabled={loading}>
-            {loading ? "Entrando…" : "Entrar"}
-          </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full py-3 text-lg font-semibold rounded-2xl shadow-md transition-all duration-200 transform
+                ${
+                  loading
+                    ? "bg-[#6A4C93]/60 cursor-not-allowed"
+                    : "bg-[#6A4C93] hover:bg-[#8B5CF6] hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 text-white"
+                }`}
+            >
+              {loading ? "Entrando…" : "Entrar"}
+            </button>
+
         </div>
       </form>
     </section>

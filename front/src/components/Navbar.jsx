@@ -38,7 +38,12 @@ export default function Navbar() {
           {isLogged ? (
             <button onClick={logout} className="btn-ghost">Sair</button>
           ) : (
-            <Link to="/login" className="btn-primary">Login</Link>
+                  <Link
+  to="/login"
+  className="ml-4 px-5 py-2 rounded-xl font-medium text-[#6A4C93] bg-[#6A4C93]/10 border border-[#6A4C93]/20 shadow-sm hover:shadow-md hover:bg-[#6A4C93]/20 transition-all duration-200"
+>
+  Login
+</Link>
           )}
         </div>
       </div>

@@ -6,7 +6,7 @@ export const loginUsuario = async (req, res) => {
     const { email, senha } = req.body;
 
     // Verifica se o e-mail existe
-    const usuario = await Usuario.findOne({ email });
+    const usuario = await Usuario.findOne({ email: username });
     if (!usuario) {
       return res.status(404).json({ message: "Usuário não encontrado" });
     }

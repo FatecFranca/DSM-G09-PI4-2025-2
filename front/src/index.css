@@ -29,3 +29,13 @@ html[data-theme='ouviot'] {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+@keyframes pulseButton {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+button:hover {
+  animation: pulseButton 0.5s ease-in-out;
+}
