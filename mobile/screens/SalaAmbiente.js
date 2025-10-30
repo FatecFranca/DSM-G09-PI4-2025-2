@@ -12,23 +12,49 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
+import api from "../services/api"; // ✅ Importa a instância do Axios configurada
 
 export default function SalaAmbiente({ navigation }) {
-  const [usuario, setUsuario] = useState("");
-  const [turma, setTurma] = useState("Selecione uma turma");
-  const [capturando, setCapturando] = useState(false);
-  const [nivelRuido, setNivelRuido] = useState(0);
-  const [animBarras] = useState(new Animated.Value(0));
-  const [menuVisivel, setMenuVisivel] = useState(false);
+  // -------------------------------
+  // 🔹 Estados principais da tela
+  // -------------------------------
+  const [usuario, setUsuario] = useState(""); // guarda nome do usuário logado
+  const [salas, setSalas] = useState([]); // lista de salas vindas do banco
+  const [turma, setTurma] = useState(""); // sala/turma selecionada
+  const [capturando, setCapturando] = useState(false); // controla início e parada de captura
+  const [nivelRuido, setNivelRuido] = useState(0); // valor atual do ruído
+  const [animBarras] = useState(new Animated.Value(0)); // valor animado para o equalizador
+  const [menuVisivel, setMenuVisivel] = useState(false); // controla visibilidade do menu
 
-  // Carrega nome do usuário
+  // -------------------------------
+  // 🧠 Busca nome do usuário salvo no AsyncStorage
+  // -------------------------------
   useEffect(() => {
     AsyncStorage.getItem("usuario").then((nome) => {
       if (nome) setUsuario(nome);
     });
   }, []);
 
-  // Animação de equalizador
+  // -------------------------------
+  // 🧩 Busca todas as salas cadastradas no MongoDB via backend
+  // -------------------------------
+  useEffect(() => {
+    const carregarSalas = async () => {
+      try {
+        const resposta = await api.get("/salas");
+        console.log("🎓 Salas carregadas:", resposta.data);
+        setSalas(resposta.data); // salva lista de salas no estado
+      } catch (erro) {
+        console.error("Erro ao carregar salas:", erro.message);
+      }
+    };
+
+    carregarSalas(); // executa quando a tela abre
+  }, []);
+
+  // -------------------------------
+  // 🎵 Animação do equalizador (subindo e descendo as barras)
+  // -------------------------------
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
@@ -48,7 +74,9 @@ export default function SalaAmbiente({ navigation }) {
     ).start();
   }, []);
 
-  // Simulação de leitura de ruído (posteriormente substituída pela API ESP32)
+  // -------------------------------
+  // 🎧 Simulação de leitura de ruído (até conectar o ESP32 real)
+  // -------------------------------
   useEffect(() => {
     let intervalo;
     if (capturando) {
@@ -60,30 +88,32 @@ export default function SalaAmbiente({ navigation }) {
     return () => clearInterval(intervalo);
   }, [capturando]);
 
-  // Equalizador animado
+  // -------------------------------
+  // 📊 Define alturas animadas das barras do equalizador
+  // -------------------------------
   const altura1 = animBarras.interpolate({ inputRange: [0, 1], outputRange: [40, 80] });
   const altura2 = animBarras.interpolate({ inputRange: [0, 1], outputRange: [70, 20] });
   const altura3 = animBarras.interpolate({ inputRange: [0, 1], outputRange: [50, 90] });
   const altura4 = animBarras.interpolate({ inputRange: [0, 1], outputRange: [60, 40] });
   const altura5 = animBarras.interpolate({ inputRange: [0, 1], outputRange: [30, 70] });
 
+  // -------------------------------
+  // 🖼️ Renderização principal da tela
+  // -------------------------------
   return (
     <View style={styles.container}>
-      {/* Logo e cabeçalho */}
+      {/* 🐾 Logo do OuvIoT */}
       <Image source={require("../assets/images/logo.png")} style={styles.logo} />
+
+      {/* 🔙 Botão de voltar */}
       <TouchableOpacity style={styles.voltar} onPress={() => navigation.navigate("Login")}>
         <Ionicons name="arrow-back-circle" size={34} color="#6A4C93" />
       </TouchableOpacity>
 
-      {/* Nome do usuário */}
+      {/* 👤 Nome do usuário logado */}
       <Text style={styles.usuario}>{usuario}</Text>
 
-      {/* Botão voltar */}
-      <TouchableOpacity style={styles.voltar} onPress={() => navigation.navigate("Login")}>
-        <Ionicons name="arrow-back-circle" size={34} color="#6A4C93" />
-      </TouchableOpacity>
-    
-    {/* Botão de menu ☰ */}
+      {/* ☰ Botão de menu superior */}
       <TouchableOpacity
         style={styles.menuBotao}
         onPress={() => setMenuVisivel(!menuVisivel)}
@@ -91,65 +121,76 @@ export default function SalaAmbiente({ navigation }) {
         <Text style={styles.menuEmoji}>☰</Text>
       </TouchableOpacity>
 
-      {/* Modal de Menu */}
+      {/* 📋 Menu lateral (abrir e fechar com clique) */}
       <Modal
         transparent
         visible={menuVisivel}
         animationType="fade"
         onRequestClose={() => setMenuVisivel(false)}
->
+      >
         <View style={styles.menuFundo} pointerEvents="box-none">
-          {/* Fecha o menu ao clicar fora OU ao clicar de novo no botão ☰ */}
+          {/* Fecha o menu ao clicar fora */}
           <TouchableOpacity
             style={StyleSheet.absoluteFill}
             activeOpacity={1}
             onPress={() => setMenuVisivel(false)}
           />
           <View style={styles.menuContainer}>
-            {["Login", "SalaAmbiente", "Gamificacao", "Relatorios", "Cadastro", "Configuracoes"].map(
-              (tela, i) => (
-                <TouchableOpacity
-                  key={i}
-                  onPress={() => {
-                    setMenuVisivel(false);
-                    navigation.navigate(tela);
-                  }}
-                  style={styles.menuItem}
-                >
-                      <Text style={styles.menuTexto}>
-                        {tela === "Login" ? "🏠 Home"
-                          : tela === "SalaAmbiente" ? "▶️ Sala Ambiente"
-                          : tela === "Gamificacao" ? "🎮 Gamificação"
-                          : tela === "Relatorios" ? "📊 Relatórios"
-                          : tela === "Cadastro" ? "🧾 Cadastro"
-                          : tela === "Configuracoes" ? "⚙️ Configurações"
-                          : tela}
-                      </Text>
-                  </TouchableOpacity>
-                )
-              )}
-            </View>
+            {[
+              "Login",
+              "SalaAmbiente",
+              "Gamificacao",
+              "Relatorios",
+              "Cadastro",
+              "Configuracoes",
+            ].map((tela, i) => (
+              <TouchableOpacity
+                key={i}
+                onPress={() => {
+                  setMenuVisivel(false);
+                  navigation.navigate(tela);
+                }}
+                style={styles.menuItem}
+              >
+                <Text style={styles.menuTexto}>
+                  {tela === "Login"
+                    ? "🏠 Home"
+                    : tela === "SalaAmbiente"
+                    ? "▶️ Sala Ambiente"
+                    : tela === "Gamificacao"
+                    ? "🎮 Gamificação"
+                    : tela === "Relatorios"
+                    ? "📊 Relatórios"
+                    : tela === "Cadastro"
+                    ? "🧾 Cadastro"
+                    : tela === "Configuracoes"
+                    ? "⚙️ Configurações"
+                    : tela}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        </Modal>
+        </View>
+      </Modal>
 
-      {/* Título */}
+      {/* 🏫 Título e subtítulo */}
       <Text style={styles.titulo}>SALA AMBIENTE</Text>
       <Text style={styles.subtitulo}>Selecionar turma atual</Text>
 
-      {/* Menu dropdown */}
+      {/* 🔽 Dropdown dinâmico com turmas vindas do MongoDB */}
       <Picker
         selectedValue={turma}
         style={styles.picker}
         onValueChange={(valor) => setTurma(valor)}
       >
         <Picker.Item label="Selecione uma turma" value="" />
-        <Picker.Item label="5B" value="5B" />
-        <Picker.Item label="1EM-A" value="1EM-A" />
-        <Picker.Item label="1BTARDE" value="1BTARDE" />
+        {salas.map((sala) => (
+          <Picker.Item key={sala._id} label={sala.nome} value={sala.nome} />
+        ))}
         <Picker.Item label="Cadastrar nova turma" value="nova" />
       </Picker>
 
-      {/* Se selecionar cadastrar nova turma */}
+      {/* ➕ Botão para cadastrar nova turma, se selecionado */}
       {turma === "nova" && (
         <TouchableOpacity
           style={styles.botaoCadastro}
@@ -159,7 +200,7 @@ export default function SalaAmbiente({ navigation }) {
         </TouchableOpacity>
       )}
 
-      {/* Botões de captura */}
+      {/* 🎙️ Botões de captura de som */}
       <View style={styles.botoesContainer}>
         <TouchableOpacity
           style={[styles.botao, { backgroundColor: "#8AC926" }]}
@@ -176,7 +217,7 @@ export default function SalaAmbiente({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Equalizador e nível de ruído */}
+      {/* 🎚️ Equalizador animado e nível de ruído */}
       {capturando && (
         <View style={styles.equalizadorContainer}>
           <Text style={styles.nivelTexto}>Nível de ruído: {nivelRuido} dB</Text>
@@ -190,7 +231,7 @@ export default function SalaAmbiente({ navigation }) {
         </View>
       )}
 
-      {/* Botão gamificação */}
+      {/* 🎮 Botão para acessar a tela de gamificação */}
       <TouchableOpacity
         style={styles.botaoGamificacao}
         onPress={() => navigation.navigate("Gamificacao")}
@@ -201,13 +242,11 @@ export default function SalaAmbiente({ navigation }) {
   );
 }
 
+// -------------------------------
+// 🎨 Estilos visuais da tela
+// -------------------------------
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FBFCF5",
-    alignItems: "center",
-    paddingTop: 40,
-  },
+  container: { flex: 1, backgroundColor: "#FBFCF5", alignItems: "center", paddingTop: 40 },
   logo: {
     position: "absolute",
     top: 40,
@@ -220,56 +259,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 3,
   },
-  voltar: {
-    position: "absolute",
-    top: 120,
-    left: 25,
-  },
+  voltar: { position: "absolute", top: 120, left: 25 },
   menuBotao: { position: "absolute", top: 50, right: 25 },
   menuEmoji: { fontSize: 26, color: "#6A4C93" },
-  menuFundo: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.1)",
-    justifyContent: "flex-start",
-    alignItems: "flex-end",
-    paddingTop: 90,
-    paddingRight: 15,
-  },
-  menuContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    width: 180,
-    shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    elevation: 5,
-  },
-  menuItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: "#eee" },
-  menuTexto: { fontSize: 16, color: "#6A4C93", fontWeight: "600" },
- 
-  usuario: {
-    position: "absolute",
-    top: 25,
-    right: 25,
-    fontSize: 12,
-    color: "#6A4C93",
-    fontWeight: "600",
-  },
-  titulo: {
-    marginTop: 120,
-    fontSize: 26,
-    fontWeight: "bold",
-    color: "#6A4C93",
-    textShadowColor: "rgba(0,0,0,0.2)",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
-  },
-  subtitulo: {
-    fontSize: 14,
-    color: "#6A4C93",
-    marginTop: 5,
-    marginBottom: 10,
-  },
+  usuario: { position: "absolute", top: 25, right: 25, fontSize: 12, color: "#6A4C93", fontWeight: "600" },
+  titulo: { marginTop: 120, fontSize: 26, fontWeight: "bold", color: "#6A4C93" },
+  subtitulo: { fontSize: 14, color: "#6A4C93", marginTop: 5, marginBottom: 10 },
   picker: {
     width: "80%",
     backgroundColor: "#fff",
@@ -278,53 +273,15 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 10,
   },
-  botaoCadastro: {
-    backgroundColor: "#FFCA3A",
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  textoCadastro: {
-    color: "#333",
-    fontWeight: "600",
-  },
-  botoesContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    width: "90%",
-    marginTop: 15,
-  },
-  botao: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 10,
-    marginHorizontal: 5,
-    alignItems: "center",
-  },
-  textoBotao: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  equalizadorContainer: {
-    alignItems: "center",
-    marginTop: 20,
-  },
-  nivelTexto: {
-    fontSize: 16,
-    color: "#333",
-    marginBottom: 10,
-  },
-  barras: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "center",
-    height: 100,
-    gap: 10,
-  },
-  barra: {
-    width: 15,
-    borderRadius: 5,
-  },
+  botaoCadastro: { backgroundColor: "#FFCA3A", padding: 10, borderRadius: 8, marginBottom: 20 },
+  textoCadastro: { color: "#333", fontWeight: "600" },
+  botoesContainer: { flexDirection: "row", justifyContent: "space-around", width: "90%", marginTop: 15 },
+  botao: { flex: 1, padding: 12, borderRadius: 10, marginHorizontal: 5, alignItems: "center" },
+  textoBotao: { color: "#fff", fontWeight: "bold" },
+  equalizadorContainer: { alignItems: "center", marginTop: 20 },
+  nivelTexto: { fontSize: 16, color: "#333", marginBottom: 10 },
+  barras: { flexDirection: "row", alignItems: "flex-end", justifyContent: "center", height: 100, gap: 10 },
+  barra: { width: 15, borderRadius: 5 },
   botaoGamificacao: {
     backgroundColor: "#6A4C93",
     padding: 12,

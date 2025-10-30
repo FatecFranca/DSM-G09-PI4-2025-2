@@ -7,71 +7,52 @@ import {
   StyleSheet,
   Image,
   Alert,
-  Modal,
-  Picker,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
+import api from "../services/api"; // ✅ Integração com o backend
 
 export default function Configuracoes({ navigation }) {
   const [email, setEmail] = useState("");
-  const [turmaSelecionada, setTurmaSelecionada] = useState("");
-  const [turmas, setTurmas] = useState([]);
-  const [menuVisivel, setMenuVisivel] = useState(false);
+  const [turmas, setTurmas] = useState([]); // lista de turmas vindas do banco
+  const [turmaDigitada, setTurmaDigitada] = useState("");
 
-  // Carrega turmas salvas
-  useEffect(() => {
-    const carregarTurmas = async () => {
-      const dados = await AsyncStorage.getItem("turmas");
-      if (dados) setTurmas(JSON.parse(dados));
-    };
-    carregarTurmas();
-  }, []);
+// ...
 
-  // Confirmação antes de apagar  usuário
+
+  // 🧍 Confirmação antes de excluir usuário
   const confirmarApagarUsuario = () => {
     if (!email.trim()) {
       Alert.alert("Aviso", "Digite o e-mail completo do usuário para confirmar a exclusão.");
       return;
     }
 
-    Alert.alert(
-      "Confirmação",
-      `Você confirma a exclusão do usuário "${email}"?`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        { text: "Confirmar", style: "destructive", onPress: apagarUsuario },
-      ]
-    );
+    Alert.alert("Confirmação", `Deseja realmente excluir o usuário "${email}"?`, [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Confirmar", style: "destructive", onPress: apagarUsuario },
+    ]);
   };
 
-  // Apagar usuário
+  // 🧍 Excluir usuário do banco
   const apagarUsuario = async () => {
-    const usuarioSalvo = await AsyncStorage.getItem("usuario");
-    if (!usuarioSalvo) {
-      Alert.alert("Nenhum usuário encontrado.");
-      return;
-    }
-
-    if (email.trim().toLowerCase() === usuarioSalvo.toLowerCase()) {
-      await AsyncStorage.removeItem("usuario");
+    try {
+      const { data } = await api.delete(`/usuarios/${encodeURIComponent(email)}`);
+      Alert.alert("Sucesso", data.message || "Usuário excluído com sucesso!");
       setEmail("");
-      Alert.alert("Sucesso", "Usuário apagado com sucesso!");
-    } else {
-      Alert.alert("Erro", "E-mail incorreto. Digite o e-mail completo do usuário cadastrado.");
+    } catch (err) {
+      console.error("Erro ao excluir usuário:", err.response?.data || err.message);
+      Alert.alert("Erro", err.response?.data?.message || "Usuário não encontrado no banco.");
     }
   };
 
-  // Confirmação antes de apagar turma
+
+  // 🏫 Confirmação antes de excluir turma
   const confirmarApagarTurma = () => {
-    if (!turmaSelecionada) {
-      Alert.alert("Aviso", "Selecione uma turma para apagar.");
+    if (!turmaDigitada.trim()) {
+      Alert.alert("Aviso", "Digite o nome ou código da turma para excluir.");
       return;
     }
 
-    Alert.alert(
-      "Confirmação",
-      `Você confirma a exclusão da turma "${turmaSelecionada}"?`,
+     Alert.alert("Confirmação",`Deseja realmente excluir a turma "${turmaDigitada}"?\n\n⚠️ Ao excluir, todos os dados dos sensores e históricos dessa turma serão removidos.`,
       [
         { text: "Cancelar", style: "cancel" },
         { text: "Confirmar", style: "destructive", onPress: apagarTurma },
@@ -79,79 +60,35 @@ export default function Configuracoes({ navigation }) {
     );
   };
 
-  // Apagar turma
+
+
+  // 🏫 Excluir turma no backend (Mongo Atlas)
   const apagarTurma = async () => {
-    const novasTurmas = turmas.filter((t) => t !== turmaSelecionada);
-    await AsyncStorage.setItem("turmas", JSON.stringify(novasTurmas));
-    setTurmas(novasTurmas);
-    setTurmaSelecionada("");
-    Alert.alert("Sucesso", "Turma apagada com sucesso!");
+    try {
+      const { data } = await api.delete(`/salas/${encodeURIComponent(turmaDigitada)}`);
+      Alert.alert("Sucesso", data.message || "Turma excluída com sucesso!");
+      // Atualiza lista local removendo turma
+      setTurmas((prev) => prev.filter((t) => t.nome !== turmaDigitada));
+      setTurmaDigitada("");
+    } catch (err) {
+      console.error("Erro ao excluir sala:", err.response?.data || err.message);
+      Alert.alert("Erro", err.response?.data?.message || "Falha ao excluir sala.");
+    }
   };
 
-  return (
 
+  return (
     <View style={styles.container}>
-      {/* Logo e botão voltar */}
+      {/* 🔊 Logo e botão voltar */}
       <Image source={require("../assets/images/logo.png")} style={styles.logo} />
       <TouchableOpacity style={styles.voltar} onPress={() => navigation.navigate("Login")}>
         <Ionicons name="arrow-back-circle" size={34} color="#6A4C93" />
       </TouchableOpacity>
 
-      {/* Botão de menu ☰ */}
-      <TouchableOpacity
-        style={styles.menuBotao}
-        onPress={() => setMenuVisivel(!menuVisivel)}
-      >
-        <Text style={styles.menuEmoji}>☰</Text>
-      </TouchableOpacity>
-
-      {/* Modal de Menu */}
-      <Modal
-        transparent
-        visible={menuVisivel}
-        animationType="fade"
-        onRequestClose={() => setMenuVisivel(false)}
->
-        <View style={styles.menuFundo} pointerEvents="box-none">
-          {/* Fecha o menu ao clicar fora OU ao clicar de novo no botão ☰ */}
-          <TouchableOpacity
-            style={StyleSheet.absoluteFill}
-            activeOpacity={1}
-            onPress={() => setMenuVisivel(false)}
-          />
-          <View style={styles.menuContainer}>
-            {["Login", "SalaAmbiente", "Gamificacao", "Relatorios", "Cadastro", "Configuracoes"].map(
-              (tela, i) => (
-                <TouchableOpacity
-                  key={i}
-                  onPress={() => {
-                    setMenuVisivel(false);
-                    navigation.navigate(tela);
-                  }}
-                  style={styles.menuItem}
-                >
-
-                      <Text style={styles.menuTexto}>
-                        {tela === "Login" ? "🏠 Home"
-                          : tela === "SalaAmbiente" ? "▶️ Sala Ambiente"
-                          : tela === "Gamificacao" ? "🎮 Gamificação"
-                          : tela === "Relatorios" ? "📊 Relatórios"
-                          : tela === "Cadastro" ? "🧾 Cadastro"
-                          : tela === "Configuracoes" ? "⚙️ Configurações"
-                          : tela}
-                      </Text>
-                  </TouchableOpacity>
-                )
-              )}
-            </View>
-          </View>
-        </Modal>
-
-
-      {/* Título */}
+      {/* 🧩 Título principal */}
       <Text style={styles.titulo}>CONFIGURAÇÕES</Text>
 
-      {/* Card apagar usuário */}
+      {/* 🧍 Card: apagar usuário */}
       <View style={styles.card}>
         <Text style={styles.subtitulo}>Apagar Usuário</Text>
         <Text style={styles.label}>Digite o e-mail completo do usuário:</Text>
@@ -168,28 +105,30 @@ export default function Configuracoes({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Card apagar turma */}
-      <View style={styles.card}>
+      {/* 🏫 Card: apagar turma */}
+            <View style={styles.card}>
         <Text style={styles.subtitulo}>Apagar Sala/Turma</Text>
-        <Text style={styles.label}>Selecione a turma que deseja apagar:</Text>
-        <Picker
-          selectedValue={turmaSelecionada}
-          style={styles.picker}
-          onValueChange={(valor) => setTurmaSelecionada(valor)}
-        >
-          <Picker.Item label="Selecione uma turma" value="" />
-          {turmas.map((t, index) => (
-            <Picker.Item key={index} label={t} value={t} />
-          ))}
-        </Picker>
+        <Text style={styles.label}>Digite a Sala/Turma:</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Ex: 6A ou 3BManha"
+          value={turmaDigitada}
+          onChangeText={setTurmaDigitada}
+          autoCapitalize="characters"
+          keyboardType="default"
+        />
         <TouchableOpacity style={styles.botaoExcluir} onPress={confirmarApagarTurma}>
-          <Text style={styles.textoBotao}>Excluir Turma</Text>
+          <Text style={styles.textoBotao}>Excluir Sala/Turma</Text>
         </TouchableOpacity>
       </View>
+
+
+
     </View>
   );
 }
 
+/* 🎨 Estilos */
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FBFCF5", alignItems: "center", paddingTop: 40 },
   logo: {
@@ -204,11 +143,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 3,
   },
-  voltar: {
-    position: "absolute",
-    top: 120,
-    left: 25,
-  },
+  voltar: { position: "absolute", top: 120, left: 25 },
   menuBotao: { position: "absolute", top: 50, right: 25 },
   menuEmoji: { fontSize: 26, color: "#6A4C93" },
   menuFundo: {
@@ -260,12 +195,13 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
   },
-  picker: {
+  pickerWrapper: {
     borderWidth: 1,
     borderColor: "#CCC",
     borderRadius: 10,
     backgroundColor: "#fff",
     marginBottom: 10,
+    overflow: "hidden",
   },
   botaoExcluir: {
     backgroundColor: "#FF595E",
@@ -274,4 +210,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   textoBotao: { color: "#fff", fontWeight: "bold" },
+  pickerWrapper: {
+  borderWidth: 1,
+  borderColor: "#CCC",
+  borderRadius: 10,
+  backgroundColor: "#fff",
+  marginBottom: 10,
+  overflow: "hidden",
+  minHeight: 45, // garante altura no iOS
+  justifyContent: "center",
+},
 });

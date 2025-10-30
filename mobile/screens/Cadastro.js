@@ -55,8 +55,12 @@ if (modo === "usuario") {
     try {
       const resposta = await api.post("/salas", { nome: turma });
       alert("Turma cadastrada com sucesso!");
-      navigation.navigate("SalaAmbiente");
-    } catch (erro) {
+        //  Limpa o campo e mantém o usuário na tela de cadastro
+        setTurma(""); // limpa o campo de texto
+        setModo("turma"); // mantém o modo "turma"
+        // Não redireciona para outra tela, apenas reseta o formulário
+   
+      } catch (erro) {
       alert("Erro ao cadastrar turma.");
     }
   }
