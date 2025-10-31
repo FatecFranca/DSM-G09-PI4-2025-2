@@ -3,7 +3,7 @@ import Usuario from "../models/Usuario.js";
 import bcrypt from "bcryptjs";
 
 /**
- * 🔹 Cria novo usuário
+ *  Cria novo usuário
  */
 export const criarUsuario = async (req, res) => {
   try {
@@ -32,7 +32,7 @@ export const criarUsuario = async (req, res) => {
 };
 
 /**
- * 🔹 Lista todos os usuários (sem senha)
+ *  Lista todos os usuários (sem senha)
  */
 export const listarUsuarios = async (req, res) => {
   try {
@@ -46,7 +46,7 @@ export const listarUsuarios = async (req, res) => {
 };
 
 /**
- * 🔹 Deleta usuário por e-mail (usado no Configurações)
+ *  Deleta usuário por e-mail (usado no Configurações)
  */
 export const deletarUsuarioPorEmail = async (req, res) => {
   try {

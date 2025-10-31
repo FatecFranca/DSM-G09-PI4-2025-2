@@ -19,7 +19,7 @@ export default function Configuracoes({ navigation }) {
 // ...
 
 
-  // 🧍 Confirmação antes de excluir usuário
+  //Confirmação antes de excluir usuário
   const confirmarApagarUsuario = () => {
     if (!email.trim()) {
       Alert.alert("Aviso", "Digite o e-mail completo do usuário para confirmar a exclusão.");
@@ -32,7 +32,7 @@ export default function Configuracoes({ navigation }) {
     ]);
   };
 
-  // 🧍 Excluir usuário do banco
+  //Excluir usuário do banco
   const apagarUsuario = async () => {
     try {
       const { data } = await api.delete(`/usuarios/${encodeURIComponent(email)}`);
@@ -45,7 +45,7 @@ export default function Configuracoes({ navigation }) {
   };
 
 
-  // 🏫 Confirmação antes de excluir turma
+  //Confirmação antes de excluir turma
   const confirmarApagarTurma = () => {
     if (!turmaDigitada.trim()) {
       Alert.alert("Aviso", "Digite o nome ou código da turma para excluir.");
@@ -62,7 +62,7 @@ export default function Configuracoes({ navigation }) {
 
 
 
-  // 🏫 Excluir turma no backend (Mongo Atlas)
+  //Excluir turma no backend (Mongo Atlas)
   const apagarTurma = async () => {
     try {
       const { data } = await api.delete(`/salas/${encodeURIComponent(turmaDigitada)}`);
@@ -79,16 +79,16 @@ export default function Configuracoes({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* 🔊 Logo e botão voltar */}
+      {/* Logo e botão voltar */}
       <Image source={require("../assets/images/logo.png")} style={styles.logo} />
       <TouchableOpacity style={styles.voltar} onPress={() => navigation.navigate("Login")}>
         <Ionicons name="arrow-back-circle" size={34} color="#6A4C93" />
       </TouchableOpacity>
 
-      {/* 🧩 Título principal */}
+      {/* Título principal */}
       <Text style={styles.titulo}>CONFIGURAÇÕES</Text>
 
-      {/* 🧍 Card: apagar usuário */}
+      {/* Card: apagar usuário */}
       <View style={styles.card}>
         <Text style={styles.subtitulo}>Apagar Usuário</Text>
         <Text style={styles.label}>Digite o e-mail completo do usuário:</Text>
@@ -105,7 +105,7 @@ export default function Configuracoes({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* 🏫 Card: apagar turma */}
+      {/* Card: apagar turma */}
             <View style={styles.card}>
         <Text style={styles.subtitulo}>Apagar Sala/Turma</Text>
         <Text style={styles.label}>Digite a Sala/Turma:</Text>
@@ -128,7 +128,7 @@ export default function Configuracoes({ navigation }) {
   );
 }
 
-/* 🎨 Estilos */
+/* Estilos */
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FBFCF5", alignItems: "center", paddingTop: 40 },
   logo: {

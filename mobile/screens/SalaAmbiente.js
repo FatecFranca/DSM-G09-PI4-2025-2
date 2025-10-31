@@ -12,11 +12,11 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
-import api from "../services/api"; // ✅ Importa a instância do Axios configurada
+import api from "../services/api"; //  Importa a instância do Axios configurada
 
 export default function SalaAmbiente({ navigation }) {
   // -------------------------------
-  // 🔹 Estados principais da tela
+  //  Estados principais da tela
   // -------------------------------
   const [usuario, setUsuario] = useState(""); // guarda nome do usuário logado
   const [salas, setSalas] = useState([]); // lista de salas vindas do banco
@@ -27,7 +27,7 @@ export default function SalaAmbiente({ navigation }) {
   const [menuVisivel, setMenuVisivel] = useState(false); // controla visibilidade do menu
 
   // -------------------------------
-  // 🧠 Busca nome do usuário salvo no AsyncStorage
+  //  Busca nome do usuário salvo no AsyncStorage
   // -------------------------------
   useEffect(() => {
     AsyncStorage.getItem("usuario").then((nome) => {
@@ -36,7 +36,7 @@ export default function SalaAmbiente({ navigation }) {
   }, []);
 
   // -------------------------------
-  // 🧩 Busca todas as salas cadastradas no MongoDB via backend
+  //  Busca todas as salas cadastradas no MongoDB via backend
   // -------------------------------
   useEffect(() => {
     const carregarSalas = async () => {
@@ -53,7 +53,7 @@ export default function SalaAmbiente({ navigation }) {
   }, []);
 
   // -------------------------------
-  // 🎵 Animação do equalizador (subindo e descendo as barras)
+  //  Animação do equalizador (subindo e descendo as barras)
   // -------------------------------
   useEffect(() => {
     Animated.loop(
@@ -75,7 +75,7 @@ export default function SalaAmbiente({ navigation }) {
   }, []);
 
   // -------------------------------
-  // 🎧 Simulação de leitura de ruído (até conectar o ESP32 real)
+  //  Simulação de leitura de ruído (até conectar o ESP32 real)
   // -------------------------------
   useEffect(() => {
     let intervalo;
@@ -89,7 +89,7 @@ export default function SalaAmbiente({ navigation }) {
   }, [capturando]);
 
   // -------------------------------
-  // 📊 Define alturas animadas das barras do equalizador
+  //  Define alturas animadas das barras do equalizador
   // -------------------------------
   const altura1 = animBarras.interpolate({ inputRange: [0, 1], outputRange: [40, 80] });
   const altura2 = animBarras.interpolate({ inputRange: [0, 1], outputRange: [70, 20] });
@@ -98,7 +98,7 @@ export default function SalaAmbiente({ navigation }) {
   const altura5 = animBarras.interpolate({ inputRange: [0, 1], outputRange: [30, 70] });
 
   // -------------------------------
-  // 🖼️ Renderização principal da tela
+  //  Renderização principal da tela
   // -------------------------------
   return (
     <View style={styles.container}>
@@ -173,11 +173,11 @@ export default function SalaAmbiente({ navigation }) {
         </View>
       </Modal>
 
-      {/* 🏫 Título e subtítulo */}
+      {/*  Título e subtítulo */}
       <Text style={styles.titulo}>SALA AMBIENTE</Text>
       <Text style={styles.subtitulo}>Selecionar turma atual</Text>
 
-      {/* 🔽 Dropdown dinâmico com turmas vindas do MongoDB */}
+      {/*  Dropdown dinâmico com turmas vindas do MongoDB */}
       <Picker
         selectedValue={turma}
         style={styles.picker}
@@ -190,7 +190,7 @@ export default function SalaAmbiente({ navigation }) {
         <Picker.Item label="Cadastrar nova turma" value="nova" />
       </Picker>
 
-      {/* ➕ Botão para cadastrar nova turma, se selecionado */}
+      {/*  Botão para cadastrar nova turma, se selecionado */}
       {turma === "nova" && (
         <TouchableOpacity
           style={styles.botaoCadastro}
@@ -200,7 +200,7 @@ export default function SalaAmbiente({ navigation }) {
         </TouchableOpacity>
       )}
 
-      {/* 🎙️ Botões de captura de som */}
+      {/*  Botões de captura de som */}
       <View style={styles.botoesContainer}>
         <TouchableOpacity
           style={[styles.botao, { backgroundColor: "#8AC926" }]}
@@ -217,7 +217,7 @@ export default function SalaAmbiente({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* 🎚️ Equalizador animado e nível de ruído */}
+      {/*  Equalizador animado e nível de ruído */}
       {capturando && (
         <View style={styles.equalizadorContainer}>
           <Text style={styles.nivelTexto}>Nível de ruído: {nivelRuido} dB</Text>
@@ -231,7 +231,7 @@ export default function SalaAmbiente({ navigation }) {
         </View>
       )}
 
-      {/* 🎮 Botão para acessar a tela de gamificação */}
+      {/*  Botão para acessar a tela de gamificação */}
       <TouchableOpacity
         style={styles.botaoGamificacao}
         onPress={() => navigation.navigate("Gamificacao")}
@@ -243,7 +243,7 @@ export default function SalaAmbiente({ navigation }) {
 }
 
 // -------------------------------
-// 🎨 Estilos visuais da tela
+//  Estilos visuais da tela
 // -------------------------------
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FBFCF5", alignItems: "center", paddingTop: 40 },

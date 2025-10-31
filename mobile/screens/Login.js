@@ -9,7 +9,7 @@ import {
   StyleSheet,
   Animated,
   Easing,
-  ActivityIndicator, // 🌀 Componente nativo do React Native para mostrar "rodinha de carregamento"
+  ActivityIndicator, // Componente nativo do React Native para mostrar "rodinha de carregamento"
 } from "react-native";
 
 // Importa o serviço de API (Axios configurado com o backend)
@@ -36,7 +36,7 @@ export default function Login({ navigation }) {
   const [carregando, setCarregando] = useState(false);
 
   // -------------------------------------------------
-  // 🎵 useEffect: anima as barras do equalizador
+  //  useEffect: anima as barras do equalizador
   // -------------------------------------------------
   useEffect(() => {
     Animated.loop(
@@ -58,7 +58,7 @@ export default function Login({ navigation }) {
   }, []);
 
   // -------------------------------------------------
-  // 🔐 Função de login (valida e envia para o backend)
+  //  Função de login (valida e envia para o backend)
   // -------------------------------------------------
   const handleLogin = async () => {
     if (!email || !senha) {
@@ -87,19 +87,19 @@ export default function Login({ navigation }) {
   };
 
   // -------------------------------------------------
-  // ➕ Navega para a tela de cadastro
+  //  Navega para a tela de cadastro
   // -------------------------------------------------
   const handleCadastro = () => navigation.navigate("Cadastro");
 
   // -------------------------------------------------
-  // ⚙️ Navega para a tela de configurações
+  //  Navega para a tela de configurações
   // -------------------------------------------------
   const handleConfiguracoes = () => {
     navigation.navigate("Configuracoes");
   };
 
   // -------------------------------------------------
-  // 📊 Define alturas interpoladas das barras animadas
+  //  Define alturas interpoladas das barras animadas
   // -------------------------------------------------
   const altura1 = animBarras.interpolate({ inputRange: [0, 1], outputRange: [40, 80] });
   const altura2 = animBarras.interpolate({ inputRange: [0, 1], outputRange: [60, 30] });
@@ -107,7 +107,7 @@ export default function Login({ navigation }) {
   const altura4 = animBarras.interpolate({ inputRange: [0, 1], outputRange: [50, 90] });
 
   // -------------------------------------------------
-  // 🌀 Mostra tela de carregamento enquanto faz login
+  //  Mostra tela de carregamento enquanto faz login
   // -------------------------------------------------
   if (carregando) {
     return (
@@ -119,26 +119,26 @@ export default function Login({ navigation }) {
   }
 
   // -------------------------------------------------
-  // 🎨 Estrutura visual da tela (UI principal)
+  //  Estrutura visual da tela (UI principal)
   // -------------------------------------------------
   return (
     <LinearGradient colors={["#FBFCF5", "#fdfdfd"]} style={styles.container}>
-      {/* 🐾 Logo do OuvIoT */}
+      {/*  Logo do OuvIoT */}
       <Image source={require("../assets/images/logo.png")} style={styles.logo} />
 
-      {/* ⚙️ Botão para ir às Configurações */}
+      {/*  Botão para ir às Configurações */}
       <TouchableOpacity style={styles.configuracoes} onPress={handleConfiguracoes}>
         <Text style={styles.configEmoji}>⚙️</Text>
       </TouchableOpacity>
 
-      {/* 🔠 Título colorido com as cores do projeto */}
+      {/*  Título colorido com as cores do projeto */}
       <Text style={styles.titulo}>
         <Text style={{ color: "#8AC926" }}>Ouv</Text>
         <Text style={{ color: "#FFCA3A" }}>Io</Text>
         <Text style={{ color: "#FF595E" }}>T</Text> App
       </Text>
 
-      {/* ✉️ Campo de e-mail */}
+      {/*  Campo de e-mail */}
       <TextInput
         style={styles.input}
         placeholder="Digite seu e-mail"
@@ -147,7 +147,7 @@ export default function Login({ navigation }) {
         onChangeText={setEmail}
       />
 
-      {/* 🔑 Campo de senha */}
+      {/*  Campo de senha */}
       <TextInput
         style={styles.input}
         placeholder="Digite sua senha"
@@ -157,17 +157,17 @@ export default function Login({ navigation }) {
         onChangeText={setSenha}
       />
 
-      {/* ✅ Botão de entrar */}
+      {/*  Botão de entrar */}
       <TouchableOpacity style={styles.botaoEntrar} onPress={handleLogin}>
         <Text style={styles.textoBotao}>Entrar</Text>
       </TouchableOpacity>
 
-      {/* ➕ Botão para cadastro */}
+      {/*  Botão para cadastro */}
       <TouchableOpacity style={styles.botaoCadastro} onPress={handleCadastro}>
         <Text style={styles.textoCadastro}>Cadastrar</Text>
       </TouchableOpacity>
 
-      {/* 🎚️ Equalizador animado ilustrativo */}
+      {/*  Equalizador animado ilustrativo */}
       <View style={styles.barrasContainer}>
         <Animated.View style={[styles.barra, { height: altura1, backgroundColor: "#8AC926" }]} />
         <Animated.View style={[styles.barra, { height: altura2, backgroundColor: "#FFCA3A" }]} />
@@ -179,12 +179,12 @@ export default function Login({ navigation }) {
 }
 
 // -------------------------------------------------
-// 🎨 Estilos visuais da tela
+//  Estilos visuais da tela
 // -------------------------------------------------
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: "center", justifyContent: "center", padding: 20 },
 
-  // 🌀 Container da tela de loading
+  //  Container da tela de loading
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
