@@ -2,7 +2,7 @@
 import Sala from "../models/Sala.js";
 
 /**
- * 🔹 Lista todas as salas
+ *  Lista todas as salas
  */
 export const listarSalas = async (req, res) => {
   try {
@@ -16,7 +16,7 @@ export const listarSalas = async (req, res) => {
 };
 
 /**
- * 🔹 Cria uma nova sala
+ *  Cria uma nova sala
  */
 export const criarSala = async (req, res) => {
   try {
@@ -42,12 +42,12 @@ export const criarSala = async (req, res) => {
 };
 
 /**
- * 🔹 Exclui sala pelo ID (usado no Configurações)
+ *  Exclui sala pelo ID (usado no Configurações)
  */
 export const deletarSala = async (req, res) => {
   try {
-    const { id } = req.params;
-    const removida = await Sala.findByIdAndDelete(id);
+    const nomeSala = req.params.nome; // vem do endpoint /api/salas/:nome
+    const removida = await Sala.findOneAndDelete({ nome: { $regex: new RegExp(`^${nomeSala}$`, "i") } });
     if (!removida)
       return res.status(404).json({ message: "Sala não encontrada." });
     res.json({ message: "Sala excluída com sucesso!" });

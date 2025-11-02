@@ -22,7 +22,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 
 // -----------------------------------------
-// 💡 Componente principal de Login
+// Componente principal de Login
 // -----------------------------------------
 export default function Login({ navigation }) {
   // Estados para armazenar os campos digitados

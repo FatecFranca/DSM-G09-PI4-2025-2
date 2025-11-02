@@ -1,100 +1,130 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image,
-  Alert,
+  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import api from "../services/api"; // ✅ Integração com o backend
+import api from "../services/api";
+import HeaderPadrao from "../components/HeaderPadrao";
 
 export default function Configuracoes({ navigation }) {
+  // Estados principais
+  const [menuVisivel, setMenuVisivel] = useState(false);
   const [email, setEmail] = useState("");
-  const [turmas, setTurmas] = useState([]); // lista de turmas vindas do banco
   const [turmaDigitada, setTurmaDigitada] = useState("");
 
-// ...
+  // Estados para o modal de confirmação
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [tipoExclusao, setTipoExclusao] = useState(""); // "usuario" ou "turma"
 
-
-  //Confirmação antes de excluir usuário
+  // =====================
+  //  EXCLUSÃO DE USUÁRIO
+  // =====================
   const confirmarApagarUsuario = () => {
     if (!email.trim()) {
-      Alert.alert("Aviso", "Digite o e-mail completo do usuário para confirmar a exclusão.");
+      alert("Digite o e-mail completo do usuário para confirmar a exclusão.");
       return;
     }
-
-    Alert.alert("Confirmação", `Deseja realmente excluir o usuário "${email}"?`, [
-      { text: "Cancelar", style: "cancel" },
-      { text: "Confirmar", style: "destructive", onPress: apagarUsuario },
-    ]);
+    setTipoExclusao("usuario");
+    setConfirmVisible(true); // abre o modal
   };
 
-  //Excluir usuário do banco
   const apagarUsuario = async () => {
     try {
       const { data } = await api.delete(`/usuarios/${encodeURIComponent(email)}`);
-      Alert.alert("Sucesso", data.message || "Usuário excluído com sucesso!");
+      alert(data.message || "Usuário excluído com sucesso!");
       setEmail("");
     } catch (err) {
       console.error("Erro ao excluir usuário:", err.response?.data || err.message);
-      Alert.alert("Erro", err.response?.data?.message || "Usuário não encontrado no banco.");
+      alert(err.response?.data?.message || "Usuário não encontrado no banco.");
     }
   };
 
-
-  //Confirmação antes de excluir turma
+  // =====================
+  //  EXCLUSÃO DE TURMA
+  // =====================
   const confirmarApagarTurma = () => {
     if (!turmaDigitada.trim()) {
-      Alert.alert("Aviso", "Digite o nome ou código da turma para excluir.");
+      alert("Digite o nome ou código da turma para excluir.");
       return;
     }
-
-     Alert.alert("Confirmação",`Deseja realmente excluir a turma "${turmaDigitada}"?\n\n⚠️ Ao excluir, todos os dados dos sensores e históricos dessa turma serão removidos.`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        { text: "Confirmar", style: "destructive", onPress: apagarTurma },
-      ]
-    );
+    setTipoExclusao("turma");
+    setConfirmVisible(true);
   };
 
-
-
-  //Excluir turma no backend (Mongo Atlas)
   const apagarTurma = async () => {
     try {
       const { data } = await api.delete(`/salas/${encodeURIComponent(turmaDigitada)}`);
-      Alert.alert("Sucesso", data.message || "Turma excluída com sucesso!");
-      // Atualiza lista local removendo turma
-      setTurmas((prev) => prev.filter((t) => t.nome !== turmaDigitada));
+      alert(data.message || "Turma excluída com sucesso!");
       setTurmaDigitada("");
     } catch (err) {
       console.error("Erro ao excluir sala:", err.response?.data || err.message);
-      Alert.alert("Erro", err.response?.data?.message || "Falha ao excluir sala.");
+      alert(err.response?.data?.message || "Falha ao excluir sala.");
     }
   };
 
+  // Chamada quando o usuário confirma no modal
+  const confirmarExclusao = () => {
+    setConfirmVisible(false);
+    if (tipoExclusao === "usuario") apagarUsuario();
+    else apagarTurma();
+  };
 
   return (
     <View style={styles.container}>
-      {/* Logo e botão voltar */}
-      <Image source={require("../assets/images/logo.png")} style={styles.logo} />
-      <TouchableOpacity style={styles.voltar} onPress={() => navigation.navigate("Login")}>
-        <Ionicons name="arrow-back-circle" size={34} color="#6A4C93" />
-      </TouchableOpacity>
+      {/* Cabeçalho padronizado */}
+      <HeaderPadrao titulo="Configurações" onMenuPress={() => setMenuVisivel(true)} />
 
-      {/* Título principal */}
-      <Text style={styles.titulo}>CONFIGURAÇÕES</Text>
+      {/* Modal do menu principal */}
+      <Modal
+        transparent
+        visible={menuVisivel}
+        animationType="fade"
+        onRequestClose={() => setMenuVisivel(false)}
+      >
+        <View style={styles.menuFundo}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setMenuVisivel(false)}
+          />
+          <View style={styles.menuContainer}>
+            {[
+              "Login",
+              "Cadastro",
+              "Configuracoes",
+            ].map((tela, i) => (
+              <TouchableOpacity
+                key={i}
+                onPress={() => {
+                  setMenuVisivel(false);
+                  navigation.navigate(tela);
+                }}
+                style={styles.menuItem}
+              >
+                <Text style={styles.menuTexto}>
+                    {tela === "Login" ? "🏠 Home"
+                    : tela === "Cadastro" ? "🧾 Cadastro"
+                    : "⚙️ Configurações"}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </Modal>
 
-      {/* Card: apagar usuário */}
+      {/* CARD - Apagar Usuário */}
       <View style={styles.card}>
         <Text style={styles.subtitulo}>Apagar Usuário</Text>
         <Text style={styles.label}>Digite o e-mail completo do usuário:</Text>
         <TextInput
           style={styles.input}
-          placeholder="exemplo@email.com"
+          placeholder="prof.ana@email.com"
+          placeholderTextColor="#aaa"
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -105,53 +135,40 @@ export default function Configuracoes({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Card: apagar turma */}
-            <View style={styles.card}>
+      {/* CARD - Apagar Turma */}
+      <View style={styles.card}>
         <Text style={styles.subtitulo}>Apagar Sala/Turma</Text>
         <Text style={styles.label}>Digite a Sala/Turma:</Text>
         <TextInput
           style={styles.input}
           placeholder="Ex: 6A ou 3BManha"
+          placeholderTextColor="#aaa"
           value={turmaDigitada}
           onChangeText={setTurmaDigitada}
           autoCapitalize="characters"
-          keyboardType="default"
         />
         <TouchableOpacity style={styles.botaoExcluir} onPress={confirmarApagarTurma}>
           <Text style={styles.textoBotao}>Excluir Sala/Turma</Text>
         </TouchableOpacity>
       </View>
 
-
-
+      {/* Botão voltar fixo */}
+      <TouchableOpacity style={styles.voltarBtn} onPress={() => navigation.goBack()}>
+        <Ionicons name="arrow-undo-circle" size={45} color="#6A4C93" />
+      </TouchableOpacity>
     </View>
   );
 }
 
-/* Estilos */
+/* 🎨 Estilos */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FBFCF5", alignItems: "center", paddingTop: 40 },
-  logo: {
-    position: "absolute",
-    top: 40,
-    left: 25,
-    width: 60,
-    height: 60,
-    resizeMode: "contain",
-    shadowColor: "#000",
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-  },
-  voltar: { position: "absolute", top: 120, left: 25 },
-  menuBotao: { position: "absolute", top: 50, right: 25 },
-  menuEmoji: { fontSize: 26, color: "#6A4C93" },
+  container: { flex: 1, backgroundColor: "#FBFCF5", alignItems: "center" },
   menuFundo: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.1)",
     justifyContent: "flex-start",
     alignItems: "flex-end",
-    paddingTop: 90,
+    paddingTop: 70,
     paddingRight: 15,
   },
   menuContainer: {
@@ -165,16 +182,7 @@ const styles = StyleSheet.create({
   },
   menuItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: "#eee" },
   menuTexto: { fontSize: 16, color: "#6A4C93", fontWeight: "600" },
-  titulo: {
-    marginTop: 120,
-    fontSize: 26,
-    fontWeight: "bold",
-    color: "#6A4C93",
-    textShadowColor: "rgba(0,0,0,0.2)",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
-    marginBottom: 20,
-  },
+  voltarBtn: { position: "absolute", bottom: 20, right: 20 },
   card: {
     width: "85%",
     backgroundColor: "#fff",
@@ -195,14 +203,6 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
   },
-  pickerWrapper: {
-    borderWidth: 1,
-    borderColor: "#CCC",
-    borderRadius: 10,
-    backgroundColor: "#fff",
-    marginBottom: 10,
-    overflow: "hidden",
-  },
   botaoExcluir: {
     backgroundColor: "#FF595E",
     padding: 10,
@@ -210,14 +210,42 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   textoBotao: { color: "#fff", fontWeight: "bold" },
-  pickerWrapper: {
-  borderWidth: 1,
-  borderColor: "#CCC",
-  borderRadius: 10,
-  backgroundColor: "#fff",
-  marginBottom: 10,
-  overflow: "hidden",
-  minHeight: 45, // garante altura no iOS
-  justifyContent: "center",
-},
+  modalFundo: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalBox: {
+    width: "80%",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  modalTitulo: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#6A4C93",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  modalTexto: {
+    fontSize: 15,
+    color: "#333",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  modalBotoes: { flexDirection: "row", justifyContent: "space-between" },
+  modalBotao: {
+    flex: 1,
+    marginHorizontal: 5,
+    padding: 10,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  modalTextoBotao: { color: "#fff", fontWeight: "bold" },
 });
