@@ -21,9 +21,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // Importa o componente de gradiente para o fundo
 import { LinearGradient } from "expo-linear-gradient";
 
-// -----------------------------------------
 // Componente principal de Login
-// -----------------------------------------
 export default function Login({ navigation }) {
   // Estados para armazenar os campos digitados
   const [email, setEmail] = useState("");
@@ -35,9 +33,7 @@ export default function Login({ navigation }) {
   // Estado que controla se a tela está carregando (rodinha visível)
   const [carregando, setCarregando] = useState(false);
 
-  // -------------------------------------------------
   //  useEffect: anima as barras do equalizador
-  // -------------------------------------------------
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
@@ -57,16 +53,14 @@ export default function Login({ navigation }) {
     ).start();
   }, []);
 
-  // -------------------------------------------------
   //  Função de login (valida e envia para o backend)
-  // -------------------------------------------------
   const handleLogin = async () => {
     if (!email || !senha) {
       alert("Preencha e-mail e senha!");
       return;
     }
 
-    setCarregando(true); // 🌀 Mostra o spinner enquanto a requisição é processada
+    setCarregando(true); // Mostra o spinner enquanto a requisição é processada
 
     try {
       const resposta = await api.post("/login", { email, senha });
@@ -82,33 +76,25 @@ export default function Login({ navigation }) {
     } catch (erro) {
       alert(erro.response?.data?.message || "Erro ao conectar com o servidor.");
     } finally {
-      setCarregando(false); // 🌀 Esconde o spinner quando termina (sucesso ou erro)
+      setCarregando(false); // Esconde o spinner quando termina (sucesso ou erro)
     }
   };
 
-  // -------------------------------------------------
   //  Navega para a tela de cadastro
-  // -------------------------------------------------
   const handleCadastro = () => navigation.navigate("Cadastro");
 
-  // -------------------------------------------------
   //  Navega para a tela de configurações
-  // -------------------------------------------------
   const handleConfiguracoes = () => {
     navigation.navigate("Configuracoes");
   };
 
-  // -------------------------------------------------
   //  Define alturas interpoladas das barras animadas
-  // -------------------------------------------------
   const altura1 = animBarras.interpolate({ inputRange: [0, 1], outputRange: [40, 80] });
   const altura2 = animBarras.interpolate({ inputRange: [0, 1], outputRange: [60, 30] });
   const altura3 = animBarras.interpolate({ inputRange: [0, 1], outputRange: [20, 70] });
   const altura4 = animBarras.interpolate({ inputRange: [0, 1], outputRange: [50, 90] });
 
-  // -------------------------------------------------
   //  Mostra tela de carregamento enquanto faz login
-  // -------------------------------------------------
   if (carregando) {
     return (
       <View style={styles.loadingContainer}>
@@ -118,9 +104,7 @@ export default function Login({ navigation }) {
     );
   }
 
-  // -------------------------------------------------
   //  Estrutura visual da tela (UI principal)
-  // -------------------------------------------------
   return (
     <LinearGradient colors={["#FBFCF5", "#fdfdfd"]} style={styles.container}>
       {/*  Logo do OuvIoT */}
@@ -178,9 +162,7 @@ export default function Login({ navigation }) {
   );
 }
 
-// -------------------------------------------------
 //  Estilos visuais da tela
-// -------------------------------------------------
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: "center", justifyContent: "center", padding: 20 },
 
@@ -202,6 +184,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
+    overflow: "hidden",
   },
 
   configuracoes: { position: "absolute", top: 50, right: 30 },

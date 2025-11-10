@@ -1,102 +1,249 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  StatusBar,
+  Platform,
+  Modal,
+} from "react-native";
+import LottieView from "lottie-react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import HeaderPadrao from "../components/HeaderPadrao";
+import api from "../services/api";
+import { Dropdown } from "react-native-element-dropdown"; 
 
 export default function Gamificacao({ navigation }) {
+  const [usuario, setUsuario] = useState("");
+  const [nivelMedio, setNivelMedio] = useState(0);
+  const [feedback, setFeedback] = useState("");
+  const [lottie, setLottie] = useState(require("../assets/lotties/atencao.json"));
+    const [salas, setSalas] = useState([]);
+    const [turma, setTurma] = useState("");
   const [menuVisivel, setMenuVisivel] = useState(false);
 
+  // Carrega o usuário logado do AsyncStorage
+  useEffect(() => {
+    AsyncStorage.getItem("usuario").then((nome) => {
+      if (nome) setUsuario(nome);
+    });
+  }, []);
+
+  // Busca salas no banco de dados (MongoDB Atlas via API)
+  useEffect(() => {
+    const carregarSalas = async () => {
+      try {
+        const { data } = await api.get("/salas");
+        setSalas(data);
+      } catch (err) {
+        console.error("Erro ao carregar salas:", err.response?.data || err.message);
+      }
+    };
+    carregarSalas();
+  }, []);
+
+  // Simula leitura de ruído (substituir futuramente pelos dados do sensor)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const valor = Math.floor(Math.random() * 90); // valor aleatório entre 0 e 90
+      setNivelMedio(valor);
+
+      if (valor < 60) {
+        setFeedback("Excelente! Sala em silêncio 👏");
+        setLottie(require("../assets/lotties/feliz.json"));
+      } else if (valor < 75) {
+        setFeedback("Atenção! O barulho está aumentando 😐");
+        setLottie(require("../assets/lotties/atencao.json"));
+      } else {
+        setFeedback("Muito barulho! Vamos reduzir o som 😣");
+        setLottie(require("../assets/lotties/triste.json"));
+      }
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
-    <View style={styles.container}>
-      {/* Cabeçalho padronizado */}
-      <HeaderPadrao titulo="Gamificação" onMenuPress={() => setMenuVisivel(true)} />
+    <SafeAreaView style={styles.safeArea}>
+      {/* Barra de status do sistema — cor padrão do dispositivo */}
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+      <View style={styles.container}>
+        <HeaderPadrao titulo="Gamificação" onMenuPress={() => {}} />
 
-      {/* Modal de menu de navegação */}
-            <Modal
-              transparent
-              visible={menuVisivel}
-              animationType="fade"
-              onRequestClose={() => setMenuVisivel(false)}
-            >
-              <View style={styles.menuFundo}>
+        <Text style={styles.titulo}>Desempenho Acústico da Turma</Text>
+
+        <View style={styles.lottieContainer}>
+       {/* Nome do usuário logado */}
+        <Text style={styles.usuario}>{usuario}</Text>
+
+        {/* Menu lateral */}
+        <Modal
+          transparent
+          visible={menuVisivel}
+          animationType="fade"
+          onRequestClose={() => setMenuVisivel(false)}
+        >
+          <View style={styles.menuFundo}>
+            <TouchableOpacity
+              style={StyleSheet.absoluteFill}
+              activeOpacity={1}
+              onPress={() => setMenuVisivel(false)}
+            />
+            <View style={styles.menuContainer}>
+              {[
+                "Login",
+                "SalaAmbiente",
+                "Gamificacao",
+                "Relatorios",
+                "Cadastro",
+                "Configuracoes",
+              ].map((tela, i) => (
                 <TouchableOpacity
-                  style={StyleSheet.absoluteFill}
-                  activeOpacity={1}
-                  onPress={() => setMenuVisivel(false)}
-                />
-                <View style={styles.menuContainer}>
-                  {[
-                    "Login",
-                    "SalaAmbiente",
-                    "Gamificacao",
-                    "Relatorios",
-                    "Cadastro",
-                    "Configuracoes",
-                  ].map((tela, i) => (
-                    <TouchableOpacity
-                      key={i}
-                      onPress={() => {
-                        setMenuVisivel(false);
-                        navigation.navigate(tela);
-                      }}
-                      style={styles.menuItem}
-                    >
-                      <Text style={styles.menuTexto}>
-                        {tela === "Login"
-                          ? "🏠 Home"
-                          : tela === "SalaAmbiente"
-                          ? "▶️ Sala Ambiente"
-                          : tela === "Gamificacao"
-                          ? "🎮 Gamificação"
-                          : tela === "Relatorios"
-                          ? "📊 Relatórios"
-                          : tela === "Cadastro"
-                          ? "🧾 Cadastro"
-                          : "⚙️ Configurações"}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            </Modal>
+                  key={i}
+                  onPress={() => {
+                    setMenuVisivel(false);
+                    navigation.navigate(tela);
+                  }}
+                  style={styles.menuItem}
+                >
+                  <Text style={styles.menuTexto}>
+                    {tela === "Login"
+                      ? "🏠 Home"
+                      : tela === "SalaAmbiente"
+                      ? "▶️ Sala Ambiente"
+                      : tela === "Gamificacao"
+                      ? "🎮 Gamificação"
+                      : tela === "Relatorios"
+                      ? "📊 Relatórios"
+                      : tela === "Cadastro"
+                      ? "🧾 Cadastro"
+                      : "⚙️ Configurações"}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </Modal>
 
-      {/* Corpo da tela */}
-      <View style={styles.content}>
-        <Text style={styles.texto}>
-          🎮 Tela de Gamificação: aqui o aluno verá o monstrinho que muda de humor e os pontos ganhos.
-        </Text>
+        {/* Seletor de turma/sala */}
+        <View style={styles.dropdownContainer}>
+          <Text style={styles.subtitulo}>Selecionar turma atual:</Text>
+          <Dropdown
+            style={styles.dropdown}
+            data={salas.map((s) => ({ label: s.nome, value: s.nome }))}
+            labelField="label"
+            valueField="value"
+            placeholder="Selecione uma turma"
+            placeholderStyle={{ color: "#888" }}
+            selectedTextStyle={{ color: "#333", fontWeight: "bold" }}
+            itemTextStyle={{ color: "#333" }}
+            activeColor="#EEE"
+            value={turma}
+            onChange={(item) => setTurma(item.value)}
+          />
+        </View>
+
+          <LottieView
+            source={lottie}
+            autoPlay
+            loop
+            style={{ width: 200, height: 200 }}
+          />
+        </View>
+
+        <Text style={styles.nivelTexto}>{nivelMedio} dB</Text>
+        <Text style={styles.feedback}>{feedback}</Text>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitulo}>💯 Pontuação da Turma</Text>
+          <Text style={styles.cardValor}>
+            {nivelMedio < 60 ? "100 pts" : nivelMedio < 75 ? "70 pts" : "40 pts"}
+          </Text>
+          <Text style={styles.cardInfo}>
+            {nivelMedio < 60
+              ? "Excelente comportamento!"
+              : nivelMedio < 75
+              ? "Pode melhorar, foco na atenção!"
+              : "Precisamos controlar o ruído!"}
+          </Text>
+        </View>
+
+        {/* Botão voltar */}
+        <TouchableOpacity style={styles.voltarBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-undo-circle" size={45} color="#6A4C93" />
+        </TouchableOpacity>
       </View>
-
-      {/* Botão voltar fixo */}
-      <TouchableOpacity style={styles.voltarBtn} onPress={() => navigation.goBack()}>
-        <Ionicons name="arrow-undo-circle" size={45} color="#6A4C93" />
-      </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FBFCF5", alignItems: "center" },
-  content: { flex: 1, alignItems: "center", justifyContent: "center", padding: 20 },
-  texto: { fontSize: 16, color: "#6A4C93", textAlign: "center" },
-  menuFundo: {
+  safeArea: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.1)",
-    justifyContent: "flex-start",
-    alignItems: "flex-end",
-    paddingTop: 70,
-    paddingRight: 15,
+    backgroundColor: "#FBFCF5",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
   },
-  menuContainer: {
+  container: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#FBFCF5",
+  },
+  titulo: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#6A4C93",
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  lottieContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 10,
+  },
+  nivelTexto: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#333",
+    marginTop: 10,
+  },
+  feedback: {
+    fontSize: 16,
+    color: "#6A4C93",
+    fontWeight: "500",
+    marginVertical: 10,
+    textAlign: "center",
+  },
+  card: {
     backgroundColor: "#fff",
-    borderRadius: 10,
-    width: 180,
+    width: "85%",
+    padding: 15,
+    borderRadius: 12,
+    marginTop: 20,
     shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    elevation: 5,
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
   },
-  menuItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: "#eee" },
-  menuTexto: { fontSize: 16, color: "#6A4C93", fontWeight: "600" },
-  voltarBtn: { position: "absolute", bottom: 30, left: 30 },
+  cardTitulo: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#8AC926",
+    marginBottom: 5,
+  },
+  cardValor: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#6A4C93",
+  },
+  cardInfo: {
+    fontSize: 13,
+    color: "#555",
+    marginTop: 5,
+  },
+  voltarBtn: {
+    position: "absolute",
+    bottom: 30,
+    left: 30,
+  },
 });

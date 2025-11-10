@@ -15,46 +15,126 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-export default function Dashboard() {
-  // Dados simulados
-  const [dados, setDados] = useState([]);
+// Loader animado e temático
+function Loader() {
+  return (
+    <div className="flex flex-col items-center justify-center h-64 opacity-70">
+      <div className="w-14 h-14 border-4 border-[#6A4C93] border-t-transparent rounded-full animate-spin"></div>
+      <p className="mt-3 text-[#6A4C93] font-medium">Carregando dados...</p>
+    </div>
+  );
+}
 
+export default function Dashboard() {
+  const [salas, setSalas] = useState([]);
+  const [salaSelecionada, setSalaSelecionada] = useState("");
+  const [dados, setDados] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  //  Buscar todas as salas
   useEffect(() => {
-    const gerarDados = () => {
-      const dadosFake = Array.from({ length: 24 }, (_, i) => ({
-        hora: `${i}:00`,
-        ruido: Math.floor(Math.random() * 40) + 50, // 50–90 dB
-      }));
-      setDados(dadosFake);
+    const buscarSalas = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/salas");
+        const data = await response.json();
+        setSalas(data);
+      } catch (err) {
+        console.error("Erro ao buscar salas:", err);
+      }
     };
-    gerarDados();
+    buscarSalas();
   }, []);
 
-  // Cores e faixas
+  //  Buscar dados de uma sala
+  const handleSelecionarSala = async (idSala) => {
+    setSalaSelecionada(idSala);
+    setLoading(true);
+    try {
+      const response = await fetch(`http://localhost:5000/api/salas/${idSala}`);
+      const data = await response.json();
+      setDados(data.sensores || []); // caso não existam sensores, fica array vazio
+    } catch (err) {
+      console.error("Erro ao buscar dados da sala:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const COLORS = ["#8AC926", "#FFCA3A", "#FF595E"];
 
+  //  Calcula os valores resumidos (ou mostra "--" se não houver dados)
   const resumo = {
-    media: 67,
-    pico: 88,
-    tempoCritico: 18,
-    silencio: 42,
-    dosimetria: 73,
+    media: dados.length ? Math.round(dados.reduce((acc, d) => acc + d.ruido, 0) / dados.length) : "--",
+    pico: dados.length ? Math.max(...dados.map((d) => d.ruido)) : "--",
+    tempoCritico: dados.length ? Math.round((dados.filter((d) => d.ruido > 75).length / dados.length) * 100) : "--",
+    silencio: dados.length ? Math.round((dados.filter((d) => d.ruido < 55).length / dados.length) * 100) : "--",
+    dosimetria: dados.length ? Math.round(dados.reduce((acc, d) => acc + d.ruido, 0) / 100) : "--",
   };
 
   const faixa = [
-    { name: "Silencioso", value: 42 },
-    { name: "Moderado", value: 40 },
-    { name: "Crítico", value: 18 },
+    { name: "Silencioso", value: dados.filter((d) => d.ruido < 55).length },
+    { name: "Moderado", value: dados.filter((d) => d.ruido >= 55 && d.ruido <= 75).length },
+    { name: "Crítico", value: dados.filter((d) => d.ruido > 75).length },
   ];
 
+  //  Caso nenhuma sala ainda tenha sido selecionada
+  if (!salaSelecionada) {
+    return (
+      <section className="container-max py-20 text-center space-y-6">
+        <h2 className="text-3xl font-bold gradient-text">Painel Sonoro</h2>
+        <p className="text-lg text-[color:var(--text)] opacity-80">
+          Selecione uma sala para visualizar os dados sonoros.
+        </p>
+
+        {/* Dropdown de seleção */}
+        <select
+          className="mt-6 bg-white/60 border border-black/10 rounded-xl px-6 py-3 text-lg font-medium shadow-sm hover:shadow-md transition-all"
+          onChange={(e) => handleSelecionarSala(e.target.value)}
+          defaultValue=""
+        >
+          <option value="" disabled>
+            Escolher sala...
+          </option>
+          {salas.map((sala) => (
+            <option key={sala._id} value={sala._id}>
+              {sala.nome}
+            </option>
+          ))}
+        </select>
+      </section>
+    );
+  }
+
+  //  Exibe o carregamento
+  if (loading) {
+    return (
+      <section className="container-max py-10">
+        <h2 className="text-3xl font-bold gradient-text mb-6">Painel Sonoro</h2>
+        <Loader />
+      </section>
+    );
+  }
+
+  // Exibe o dashboard — mesmo sem dados
   return (
     <section className="container-max py-10 space-y-10">
-      {/* Cabeçalho */}
-      <div className="flex flex-col md:flex-row justify-between items-center">
-        <h2 className="text-3xl font-bold gradient-text">Painel Sonoro</h2>
-        <p className="text-[color:var(--text)] opacity-80">
-          Última atualização: {new Date().toLocaleString("pt-BR")}
-        </p>
+      {/* Cabeçalho + seletor */}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <h2 className="text-3xl font-bold gradient-text">
+          Painel Sonoro — {salas.find((s) => s._id === salaSelecionada)?.nome}
+        </h2>
+
+        <select
+          className="bg-white/70 border border-black/10 rounded-xl px-5 py-2 font-medium shadow-sm hover:shadow-md transition-all"
+          value={salaSelecionada}
+          onChange={(e) => handleSelecionarSala(e.target.value)}
+        >
+          {salas.map((sala) => (
+            <option key={sala._id} value={sala._id}>
+              {sala.nome}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Cards principais */}
@@ -91,38 +171,23 @@ export default function Dashboard() {
 
       {/* Gráfico de linha */}
       <div className="card p-6 bg-white/70">
-        <h3 className="text-xl font-semibold mb-4">📈 Variação Sonora ao Longo do Dia</h3>
+        <h3 className="text-xl font-semibold mb-4">
+          📈 Variação Sonora — {salas.find((s) => s._id === salaSelecionada)?.nome}
+        </h3>
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={dados}>
+          <LineChart data={dados.length ? dados : [{ hora: "", ruido: 0 }]}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="hora" />
             <YAxis domain={[50, 90]} />
             <Tooltip />
-            <Line type="monotone" dataKey="ruido" stroke="#6A4C93" strokeWidth={3} />
+            <Line type="monotone" dataKey="ruido" stroke="#6A4C93" strokeWidth={3} dot={!dados.length} />
           </LineChart>
         </ResponsiveContainer>
-      </div>
-
-      {/* Gráfico de barras comparativo */}
-      <div className="card p-6 bg-white/70">
-        <h3 className="text-xl font-semibold mb-4">🏫 Comparativo de Turmas</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart
-            data={[
-              { turma: "1A", media: 65 },
-              { turma: "1B", media: 72 },
-              { turma: "2A", media: 68 },
-              { turma: "2B", media: 80 },
-            ]}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="turma" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="media" fill="#FFCA3A" />
-          </BarChart>
-        </ResponsiveContainer>
+        {!dados.length && (
+          <p className="text-center text-sm text-gray-500 mt-2 italic">
+            Nenhum dado encontrado para esta sala.
+          </p>
+        )}
       </div>
 
       {/* Gráfico de pizza */}
@@ -131,7 +196,7 @@ export default function Dashboard() {
         <ResponsiveContainer width="100%" height={250}>
           <PieChart>
             <Pie
-              data={faixa}
+              data={dados.length ? faixa : [{ name: "Sem dados", value: 1 }]}
               dataKey="value"
               nameKey="name"
               cx="50%"
@@ -139,7 +204,7 @@ export default function Dashboard() {
               outerRadius={80}
               label
             >
-              {faixa.map((entry, index) => (
+              {(dados.length ? faixa : [{ name: "Sem dados", value: 1 }]).map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>

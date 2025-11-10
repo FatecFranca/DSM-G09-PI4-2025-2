@@ -7,13 +7,15 @@ import {
   Animated,
   Easing,
   Modal,
+  Platform,
+  StatusBar,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
-import { Picker } from "@react-native-picker/picker";
-import { SafeAreaView } from "react-native-safe-area-context"; // ✅ adicionado
 import HeaderPadrao from "../components/HeaderPadrao";
 import api from "../services/api";
+import { Dropdown } from "react-native-element-dropdown"; 
 
 export default function SalaAmbiente({ navigation }) {
   const [usuario, setUsuario] = useState("");
@@ -24,14 +26,14 @@ export default function SalaAmbiente({ navigation }) {
   const [animBarras] = useState(new Animated.Value(0));
   const [menuVisivel, setMenuVisivel] = useState(false);
 
-  // Carrega o usuário logado
+  // Carrega o usuário logado do AsyncStorage
   useEffect(() => {
     AsyncStorage.getItem("usuario").then((nome) => {
       if (nome) setUsuario(nome);
     });
   }, []);
 
-  // Buscar salas no banco do MongoDB ao abrir a tela
+  // Busca salas no banco de dados (MongoDB Atlas via API)
   useEffect(() => {
     const carregarSalas = async () => {
       try {
@@ -44,7 +46,7 @@ export default function SalaAmbiente({ navigation }) {
     carregarSalas();
   }, []);
 
-  // Animação do equalizador
+  // Animação das barras do equalizador
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
@@ -64,7 +66,7 @@ export default function SalaAmbiente({ navigation }) {
     ).start();
   }, []);
 
-  // Simulação do ruído enquanto captura está ativa
+  // Simula a captura de som enquanto o modo está ativo
   useEffect(() => {
     let intervalo;
     if (capturando) {
@@ -76,7 +78,7 @@ export default function SalaAmbiente({ navigation }) {
     return () => clearInterval(intervalo);
   }, [capturando]);
 
-  // Animações das barras do equalizador
+  // Alturas animadas do equalizador
   const alturas = [
     animBarras.interpolate({ inputRange: [0, 1], outputRange: [40, 80] }),
     animBarras.interpolate({ inputRange: [0, 1], outputRange: [70, 20] }),
@@ -86,15 +88,18 @@ export default function SalaAmbiente({ navigation }) {
   ];
 
   return (
-    <SafeAreaView style={styles.safeArea}>  {/* ✅ Envolve toda a tela */}
+    <SafeAreaView style={styles.safeArea}>
+      {/* Barra de status do sistema — cor padrão do dispositivo */}
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+
       <View style={styles.container}>
         {/* Cabeçalho padronizado */}
         <HeaderPadrao titulo="Sala Ambiente" onMenuPress={() => setMenuVisivel(true)} />
 
-        {/* Nome do usuário no canto superior direito */}
+        {/* Nome do usuário logado */}
         <Text style={styles.usuario}>{usuario}</Text>
 
-        {/* Modal de menu de navegação */}
+        {/* Menu lateral */}
         <Modal
           transparent
           visible={menuVisivel}
@@ -143,19 +148,23 @@ export default function SalaAmbiente({ navigation }) {
           </View>
         </Modal>
 
-        {/* Corpo principal */}
-        <Text style={styles.subtitulo}>Selecionar turma atual:</Text>
-        <Picker
-          selectedValue={turma}
-          style={styles.picker}
-          onValueChange={(valor) => setTurma(valor)}
-        >
-          <Picker.Item label="Selecione uma turma" value="" />
-          {salas.map((sala) => (
-            <Picker.Item key={sala._id} label={sala.nome} value={sala.nome} />
-          ))}
-          <Picker.Item label="Cadastrar nova turma" value="nova" />
-        </Picker>
+        {/* Seletor de turma/sala */}
+        <View style={styles.dropdownContainer}>
+          <Text style={styles.subtitulo}>Selecionar turma atual:</Text>
+          <Dropdown
+            style={styles.dropdown}
+            data={salas.map((s) => ({ label: s.nome, value: s.nome }))}
+            labelField="label"
+            valueField="value"
+            placeholder="Selecione uma turma"
+            placeholderStyle={{ color: "#888" }}
+            selectedTextStyle={{ color: "#333", fontWeight: "bold" }}
+            itemTextStyle={{ color: "#333" }}
+            activeColor="#EEE"
+            value={turma}
+            onChange={(item) => setTurma(item.value)}
+          />
+        </View>
 
         {turma === "nova" && (
           <TouchableOpacity
@@ -166,7 +175,7 @@ export default function SalaAmbiente({ navigation }) {
           </TouchableOpacity>
         )}
 
-        {/* Botões de captura */}
+        {/* Botões principais */}
         <View style={styles.botoesContainer}>
           <TouchableOpacity
             style={[styles.botao, { backgroundColor: "#8AC926" }]}
@@ -183,7 +192,7 @@ export default function SalaAmbiente({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {/* Equalizador e ruído */}
+        {/* Equalizador dinâmico */}
         {capturando && (
           <View style={styles.equalizadorContainer}>
             <Text style={styles.nivelTexto}>Nível de ruído: {nivelRuido} dB</Text>
@@ -195,13 +204,7 @@ export default function SalaAmbiente({ navigation }) {
                     styles.barra,
                     {
                       height: altura,
-                      backgroundColor: [
-                        "#8AC926",
-                        "#FFCA3A",
-                        "#FF595E",
-                        "#8AC926",
-                        "#FFCA3A",
-                      ][i],
+                      backgroundColor: ["#8AC926", "#FFCA3A", "#FF595E", "#8AC926", "#FFCA3A"][i],
                     },
                   ]}
                 />
@@ -210,7 +213,7 @@ export default function SalaAmbiente({ navigation }) {
           </View>
         )}
 
-        {/* Botão para tela de gamificação */}
+        {/* Botão gamificação */}
         <TouchableOpacity
           style={styles.botaoGamificacao}
           onPress={() => navigation.navigate("Gamificacao")}
@@ -218,11 +221,8 @@ export default function SalaAmbiente({ navigation }) {
           <Text style={styles.textoBotao}>🎮 Ir para Gamificação</Text>
         </TouchableOpacity>
 
-        {/* Botão de voltar fixo */}
-        <TouchableOpacity
-          style={styles.voltarBtn}
-          onPress={() => navigation.goBack()}
-        >
+        {/* Botão voltar */}
+        <TouchableOpacity style={styles.voltarBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-undo-circle" size={45} color="#6A4C93" />
         </TouchableOpacity>
       </View>
@@ -230,10 +230,12 @@ export default function SalaAmbiente({ navigation }) {
   );
 }
 
+/*  Estilos */
 const styles = StyleSheet.create({
-  safeArea: {   // ✅ nova área segura
+  safeArea: {
     flex: 1,
-    backgroundColor: "#A4D233", // mantém cor do cabeçalho
+    backgroundColor: "#FBFCF5",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
   },
   container: {
     flex: 1,
@@ -267,15 +269,20 @@ const styles = StyleSheet.create({
   },
   menuItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: "#eee" },
   menuTexto: { fontSize: 16, color: "#6A4C93", fontWeight: "600" },
-  subtitulo: { fontSize: 16, color: "#6A4C93", marginTop: 60, marginBottom: 20 },
-  picker: {
-    width: "70%",
-    height: 30,
+  subtitulo: { fontSize: 16, color: "#6A4C93", marginBottom: 10 },
+  dropdownContainer: {
+    width: "85%",
+    marginVertical: 20,
+  },
+  dropdown: {
+    width: "100%",
     backgroundColor: "#fff",
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: "#CCC",
-    borderRadius: 10,
-    marginBottom: 20,
+    height: 45,
+    paddingHorizontal: 10,
+    elevation: 2,
   },
   botaoCadastro: {
     backgroundColor: "#FFCA3A",

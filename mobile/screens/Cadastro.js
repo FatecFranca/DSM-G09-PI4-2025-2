@@ -8,12 +8,13 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
+  StatusBar,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import HeaderPadrao from "../components/HeaderPadrao"; 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../services/api";
-
 export default function Cadastro({ navigation }) {
   // Estados de controle
   const [modo, setModo] = useState("usuario");
@@ -57,6 +58,10 @@ export default function Cadastro({ navigation }) {
   };
 
   return (
+    <SafeAreaView style={styles.safeArea}>
+      {/* Barra de status do sistema — cor padrão do dispositivo */}
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
@@ -182,15 +187,22 @@ export default function Cadastro({ navigation }) {
         <Text style={styles.textoBotao}>Salvar Cadastro</Text>
       </TouchableOpacity>
 
-      {/* Botão voltar fixo na parte inferior */}
+      {/* Botão voltar */}
       <TouchableOpacity style={styles.voltar} onPress={() => navigation.goBack()}>
         <Ionicons name="arrow-undo-circle" size={45} color="#6A4C93" />
       </TouchableOpacity>
     </KeyboardAvoidingView>
+      
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#FBFCF5",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+  },
   container: {
     flex: 1,
     backgroundColor: "#FBFCF5",
