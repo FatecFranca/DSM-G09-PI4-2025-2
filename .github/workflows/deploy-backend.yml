@@ -1,0 +1,19 @@
+name: TESTE SSH
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Add SSH key
+      uses: webfactory/ssh-agent@v0.7.0
+      with:
+        ssh-private-key: ${{ secrets.AZURE_SSH_KEY }}
+
+    - name: Test SSH connection
+      run: |
+        ssh -o StrictHostKeyChecking=no monica@20.80.105.137 "echo CONECTOU COM SUCESSO!"
+
