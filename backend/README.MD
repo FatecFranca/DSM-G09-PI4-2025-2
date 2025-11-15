@@ -1,7 +1,7 @@
 # 🧠 OuvIoT – Backend  
 
 
-Esta parte do repositório representa o **backend (API REST)**, responsável por:
+Esta parte do repositório representa o **Backend (API REST)**, responsável por:
 - Receber e armazenar dados de sensores sonoros (ESP32);
 - Gerenciar usuários e autenticação simples;
 - Fornecer endpoints para o painel web e aplicativo mobile.
