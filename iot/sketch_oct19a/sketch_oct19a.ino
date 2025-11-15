@@ -1,79 +1,179 @@
-#include <Arduino.h>
-#include <driver/i2s.h>
-#include <math.h>
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include <ArduinoJson.h>
+#include <WiFiManager.h>   // Biblioteca do WiFiManager
 
-// INMP441 → ESP32 pins
-#define PIN_WS  25   // LRCLK
-#define PIN_SCK 26   // BCLK
-#define PIN_SD  33   // DOUT
+// =============================
+// CONFIG WiFi
+// =============================
+const char* ssid = "Falqueto 2.4G";
+const char* password = "@Loki21@";
 
-#define SAMPLE_RATE 16000
-#define SAMPLES     1024
+// =============================
+// CONFIG MQTT
+// =============================
+const char* mqtt_server = "20.80.105.137";   // IP da sua VM Azure com Mosquitto
+const int   mqtt_port   = 1883;
 
-int32_t buffer[SAMPLES];
+WiFiClient espClient;
+PubSubClient client(espClient);
 
+bool capturaAtiva = false;
+String salaAtual = "";
+
+// =============================
+// SENSOR KY-038 / LEDs
+// =============================
+#define MIC_PIN 34
+
+#define LED_VERDE    27
+#define LED_AMARELO  14
+#define LED_VERMELHO 12
+
+const int sampleWindow = 100; // 100ms
+
+// =============================
+// Funções auxiliares
+// =============================
+float amplitudeToDb(int amplitude) {
+  if (amplitude <= 1) return 0;
+  float db = 20 * log10((float)amplitude);
+  if (db < 0) db = 0;
+  return db;
+}
+
+String classifyNoise(float db) {
+  if (db < 50) {
+    digitalWrite(LED_VERDE, HIGH);
+    digitalWrite(LED_AMARELO, LOW);
+    digitalWrite(LED_VERMELHO, LOW);
+    return "ok";
+  } 
+  else if (db < 60) {
+    digitalWrite(LED_VERDE, LOW);
+    digitalWrite(LED_AMARELO, HIGH);
+    digitalWrite(LED_VERMELHO, LOW);
+    return "alert";
+  } 
+  else {
+    digitalWrite(LED_VERDE, LOW);
+    digitalWrite(LED_AMARELO, LOW);
+    digitalWrite(LED_VERMELHO, HIGH);
+    return "high";
+  }
+}
+
+// =============================
+// CALLBACK MQTT
+// =============================
+void mqttCallback(char* topic, byte* message, unsigned int length) {
+  String payload = "";
+  for (int i = 0; i < length; i++) payload += (char)message[i];
+
+  Serial.println("📩 Comando recebido → " + payload);
+
+  if (String(topic) == "ouviot/captura/comando") {
+    if (payload == "start") {
+      capturaAtiva = true;
+      Serial.println("▶️ CAPTURA ATIVADA!");
+    }
+    if (payload == "stop") {
+      capturaAtiva = false;
+      Serial.println("⏹ CAPTURA PARADA!");
+    }
+  }
+
+  if (String(topic) == "ouviot/captura/sala") {
+    salaAtual = payload;
+    Serial.println("Sala definida: " + salaAtual);
+  }
+}
+
+// =============================
+// CONECTAR MQTT
+// =============================
+void reconnectMQTT() {
+  while (!client.connected()) {
+    Serial.print("Conectando ao MQTT...");
+    if (client.connect("ESP32_Ouviot")) {
+      Serial.println("conectado!");
+
+      client.subscribe("ouviot/captura/comando");
+      client.subscribe("ouviot/captura/sala");
+
+    } else {
+      Serial.print("falhou, rc=");
+      Serial.println(client.state());
+      delay(2000);
+    }
+  }
+}
+
+// =============================
+// SETUP
+// =============================
 void setup() {
   Serial.begin(115200);
-  delay(500);
-  Serial.println("INMP441 → Nível de som (dB aprox) a cada 2s");
 
-  i2s_config_t config = {
-    .mode                 = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX),
-    .sample_rate          = SAMPLE_RATE,
-    .bits_per_sample      = I2S_BITS_PER_SAMPLE_32BIT,
-    .channel_format       = I2S_CHANNEL_FMT_ONLY_LEFT,
-    .communication_format = I2S_COMM_FORMAT_I2S,
-    .intr_alloc_flags     = 0,
-    .dma_buf_count        = 4,
-    .dma_buf_len          = SAMPLES
-  };
+  pinMode(LED_VERDE, OUTPUT);
+  pinMode(LED_AMARELO, OUTPUT);
+  pinMode(LED_VERMELHO, OUTPUT);
 
-  i2s_pin_config_t pin_cfg = {
-    .bck_io_num   = PIN_SCK,
-    .ws_io_num    = PIN_WS,
-    .data_out_num = -1,
-    .data_in_num  = PIN_SD
-  };
+  // ===== WiFiManager =====
+  WiFiManager wm;
 
-  i2s_driver_install(I2S_NUM_0, &config, 0, NULL);
-  i2s_set_pin(I2S_NUM_0, &pin_cfg);
-  i2s_zero_dma_buffer(I2S_NUM_0);
+  Serial.println("⚙ Iniciando WiFiManager...");
+  bool res = wm.autoConnect("OuvIoT-Setup");  // sem senha
+
+  if (!res) {
+    Serial.println("❌ Falha ao conectar. Reiniciando...");
+    delay(3000);
+    ESP.restart();
+  }
+
+  Serial.println("📶 WiFi conectado!");
+  Serial.println(WiFi.localIP());
+
+  // ===== MQTT =====
+  client.setServer(mqtt_server, mqtt_port);
+  client.setCallback(mqttCallback);
 }
 
+// =============================
+// LOOP
+// =============================
 void loop() {
-  size_t bytes_read = 0;
-  i2s_read(I2S_NUM_0, buffer, sizeof(buffer), &bytes_read, portMAX_DELAY);
+  if (!client.connected()) reconnectMQTT();
+  client.loop();
 
-  int samples = bytes_read / 4;
-  if (samples == 0) return;
+  if (!capturaAtiva) return;
 
-  double sum_sq = 0;
-  bool has_signal = false;
+  unsigned long startTime = millis();
 
-  for (int i=0; i<samples; i++) {
-    int32_t v = buffer[i] >> 8; // 24 bits úteis
-    if (v != 0) has_signal = true;
-    sum_sq += (double)v * v;
+  int signalMax = 0;
+  int signalMin = 4095;
+
+  while (millis() - startTime < sampleWindow) {
+    int adcValue = analogRead(MIC_PIN);
+    if (adcValue > signalMax) signalMax = adcValue;
+    if (adcValue < signalMin) signalMin = adcValue;
   }
 
-  if (!has_signal) {
-    Serial.println("Sem sinal? (verifique conexões)");
-    delay(2000);
-    return;
-  }
+  int amplitude = signalMax - signalMin;
+  float db = amplitudeToDb(amplitude);
+  String status = classifyNoise(db);
 
-  double rms = sqrt(sum_sq / samples);
-  if (rms < 1) rms = 1; // evita log(0)
+  // Monta JSON
+  StaticJsonDocument<256> doc;
+  doc["sala"] = salaAtual;
+  doc["db"] = db;
+  doc["status"] = status;
 
-  // dB relativo — vamos calibrar depois com app dB meter
-  double db = 20.0 * log10(rms / 50000.0);
+  char buffer[256];
+  serializeJson(doc, buffer);
 
-  Serial.print("Nível de som: ");
-  Serial.print(db, 2);
-  Serial.println(" dB");
+  client.publish("ouviot/captura/dados", buffer);
 
-  delay(2000);
+  Serial.printf("📤 Enviado → Sala: %s | dB: %.1f | Estado: %s\n",
+                salaAtual.c_str(), db, status.c_str());
 }
-
-
-
