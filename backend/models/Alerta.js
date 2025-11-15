@@ -2,9 +2,13 @@ import mongoose from "mongoose";
 
 const AlertaSchema = new mongoose.Schema({
   sala: { type: String, required: true },
-  nivelRuido: { type: Number, required: true },
-  horario: { type: Date, default: Date.now },
-  mensagem: { type: String, default: "Nível de ruído acima do limite!" }
+  db: { type: Number, required: true },
+  status: { 
+    type: String, 
+    enum: ["alert", "high"], 
+    required: true 
+  },
+  criadoEm: { type: Date, default: Date.now }
 });
 
 export default mongoose.model("Alerta", AlertaSchema);
