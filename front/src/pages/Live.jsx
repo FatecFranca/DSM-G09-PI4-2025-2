@@ -9,7 +9,7 @@ export default function Live() {
   useEffect(() => {
     const verificarCaptura = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/salas/ativa"); 
+        const response = await fetch("http://20.80.105.137:5000/api/salas/ativa"); 
         //  endpoint retorna { ativa: true/false, turma: "2A" }
         const data = await response.json();
         setCapturaAtiva(data.ativa);
