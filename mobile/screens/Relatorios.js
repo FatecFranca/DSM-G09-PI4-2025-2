@@ -14,14 +14,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LineChart, BarChart, PieChart } from "react-native-chart-kit";
 import { Ionicons } from "@expo/vector-icons";
 import { Dropdown } from "react-native-element-dropdown";
-import AsyncStorage from "@react-native-async-storage/async-storage"; // ✅ IMPORTAÇÃO CORRIGIDA
+import AsyncStorage from "@react-native-async-storage/async-storage"; 
 import api from "../services/api";
 import HeaderPadrao from "../components/HeaderPadrao";
 
 const screenWidth = Dimensions.get("window").width;
 
 export default function Relatorios({ navigation }) {
-  // Estados principais
   const [usuario, setUsuario] = useState("");
   const [salas, setSalas] = useState([]);
   const [salaSelecionada, setSalaSelecionada] = useState("");
