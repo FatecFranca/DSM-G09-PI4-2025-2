@@ -1,9 +1,13 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import logoT from "../assets/logoT.png";
 
+
 export default function Navbar() {
+  
   const navigate = useNavigate();
   const isLogged = !!localStorage.getItem("ouviot_user");
+
+
 
   const logout = () => {
     localStorage.removeItem("ouviot_user");
@@ -32,6 +36,10 @@ export default function Navbar() {
           <NavLink to="/dashboard" className={({ isActive }) => (isActive ? active : nav)}>
             Dashboard
           </NavLink>
+          <NavLink to="/live" className={({ isActive }) => (isActive ? active : nav)}>
+          Sala Ambiente
+          </NavLink>
+
         </nav>
 
         <div className="flex items-center gap-3">

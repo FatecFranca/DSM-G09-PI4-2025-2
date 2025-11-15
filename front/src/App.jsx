@@ -6,6 +6,8 @@ import Sobre from "./pages/Sobre.jsx";
 import Login from "./pages/Login.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import PrivateRoute from "./auth/PrivateRoute.jsx";
+import Live from "./pages/Live.jsx";
+
 
 export default function App() {
   return (
@@ -16,6 +18,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/sobre" element={<Sobre />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/live" element={<Live />} />
           <Route
             path="/dashboard"
             element={
