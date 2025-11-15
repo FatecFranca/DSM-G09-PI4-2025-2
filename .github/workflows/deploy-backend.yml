@@ -1,19 +1,34 @@
-name: TESTE SSH
+name: Deploy Backend to Azure VM
 
 on:
-  workflow_dispatch:
+  push:
+    paths:
+      - "backend/**"
+    branches:
+      - main
 
 jobs:
-  test:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Add SSH key
-      uses: webfactory/ssh-agent@v0.7.0
-      with:
-        ssh-private-key: ${{ secrets.AZURE_SSH_KEY }}
+      - name: Checkout do código
+        uses: actions/checkout@v4
 
-    - name: Test SSH connection
-      run: |
-        ssh -o StrictHostKeyChecking=no monica@20.80.105.137 "echo CONECTOU COM SUCESSO!"
+      - name: Configurar SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.AZURE_SSH_KEY }}
 
+      - name: Deploy na Azure VM
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.AZURE_USER }}@${{ secrets.AZURE_HOST }} << EOF
+            cd ~/DSM-G09-PI4-2025-2
+            git pull origin main
+            cd backend
+            npm install --omit=dev
+
+            # Reinicia ou inicia se não existir
+            pm2 restart ouviot-backend || pm2 start server.js --name ouviot-backend
+            pm2 save
+          EOF
