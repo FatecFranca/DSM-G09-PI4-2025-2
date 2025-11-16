@@ -35,7 +35,7 @@ export default function Dashboard() {
   useEffect(() => {
     const buscarSalas = async () => {
       try {
-        const response = await fetch("http://20.80.105.137:5000/api/salas");
+        const response = await fetch("http://localhost:5000/api/salas");
         const data = await response.json();
         setSalas(data);
       } catch (err) {
@@ -50,7 +50,7 @@ export default function Dashboard() {
     setSalaSelecionada(idSala);
     setLoading(true);
     try {
-      const response = await fetch(`http://20.80.105.137:5000/api/salas/${idSala}`);
+      const response = await fetch(`http://localhost:5000/api/salas/${idSala}`);
       const data = await response.json();
       setDados(data.sensores || []); // caso não existam sensores, fica array vazio
     } catch (err) {
