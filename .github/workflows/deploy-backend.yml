@@ -5,7 +5,6 @@ on:
     branches:
       - main
 
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -19,15 +18,15 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.AZURE_SSH_KEY }}
 
-      - name: Copiar arquivos para VM
+      - name: Copiar backend para VM
         run: |
           rsync -avz --delete \
             -e "ssh -o StrictHostKeyChecking=no" \
-            ./ monica@20.80.105.137:/home/monica/DSM-G09-PI4-2025-2/backend/
+            ./backend/ monica@${{ secrets.AZURE_HOST }}:/home/monica/DSM-G09-PI4-2025-2/backend/
 
       - name: Instalar dependências e reiniciar PM2
         run: |
-          ssh -o StrictHostKeyChecking=no monica@20.80.105.137 << 'EOF'
+          ssh -o StrictHostKeyChecking=no monica@${{ secrets.AZURE_HOST }} << 'EOF'
             cd /home/monica/DSM-G09-PI4-2025-2/backend
             npm install
             pm2 restart ouviot-backend || pm2 start server.js --name ouviot-backend
