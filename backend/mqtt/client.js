@@ -16,29 +16,32 @@ client.on("connect", () => {
 
 // Quando mensagens chegam do ESP32
 client.on("message", async (topic, message) => {
-  const payload = message.toString();
-  console.log(`📩 MQTT ${topic}: ${payload}`);
+  try {
+    const payload = message.toString();
+    console.log(`📩 MQTT ${topic}: ${payload}`);
 
-  if (topic === "ouviot/captura/dados") {
-    const dados = JSON.parse(payload);
+    if (topic === "ouviot/captura/dados") {
+      const dados = JSON.parse(payload);
 
-    // 1️⃣ Salvar em SensorData (histórico completo)
-    await SensorData.create({
-      sala: dados.sala,
-      db: dados.db,
-      status: dados.status,
-      criadoEm: new Date(),
-    });
-
-    // 2️⃣ Se for alerta → salvar também na tabela "alertas"
-    if (dados.status === "alert" || dados.status === "high") {
-      await Alerta.create({
+    // 1️ Salvar em SensorData (histórico completo)
+      await SensorData.create({
         sala: dados.sala,
         db: dados.db,
         status: dados.status,
         criadoEm: new Date(),
       });
+
+    // 2️ Se for alerta → salvar também na tabela "alertas"
+      if (dados.status === "alert" || dados.status === "high") {
+        await Alerta.create({
+          sala: dados.sala,
+          db: dados.db,
+          status: dados.status,
+        });
+      }
     }
+      } catch (err) {
+    console.log("Erro ao processar MQTT:", err.message);
   }
 });
 

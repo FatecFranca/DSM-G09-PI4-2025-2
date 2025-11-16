@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
     textAlign: "center",
-    marginVertical: 45,
+    marginVertical: 5,
   },
   modoContainer: {
     flexDirection: "row",

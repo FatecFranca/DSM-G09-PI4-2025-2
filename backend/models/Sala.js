@@ -7,3 +7,4 @@ const SalaSchema = new mongoose.Schema({
 });
 
 export default mongoose.model("Sala", SalaSchema);
+

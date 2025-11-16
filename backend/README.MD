@@ -2,9 +2,14 @@
 
 
 Esta parte do repositório representa o **Backend (API REST)**, responsável por:
-- Receber e armazenar dados de sensores sonoros (ESP32);
+- Receber e armazenar dados de sensores enviados pelo ESP32 via MQTT
 - Gerenciar usuários e autenticação simples;
+- Expor rotas REST para o aplicativo mobile e painel web
+- Persistir informações no MongoDB
 - Fornecer endpoints para o painel web e aplicativo mobile.
+- Controlar início e parada de captura
+- Gerar alertas automáticos
+- Organizar salas, usuários e histórico de ruído
 
 ---
 
@@ -19,41 +24,77 @@ Esta parte do repositório representa o **Backend (API REST)**, responsável por
 | **dotenv** | Variáveis de ambiente e segurança |
 | **bcryptjs** | Criptografia de senhas |
 | **CORS** | Comunicação entre frontends e backend |
+| **MQTT.js** | Comunicação com ESP32 |
+---
 
+## 📡 Fluxo Arquitetural – OuvIoT
+```
+[Mobile] ——HTTP——> [Backend] ——MQTT——> [ESP32 + Sensor]
+      <—HTTP——        <—MQTT———
+         │                   │
+      GET dados           Envia dB
+      POST iniciar        Envia status
+      POST parar
+```
+Resumo do fluxo:
+1. Mobile chama POST /captura/iniciar
+2. Backend publica MQTT: "ouviot/captura/comando" → "start"
+3. ESP32 começa a captar som e envia:
+```    
+    topic: ouviot/captura/dados
+    payload: { sala, db, status }
+```
+4. Backend recebe os dados → salva em SensorData
+5. Se status = alert ou high → salva em Alerta
+6. Mobile consulta o gráfico chamando:
+```
+    GET /sensores/ultimos/:sala
+```
 ---
 
 ## 🧱 Estrutura de Pastas
 
 ```
 backend/
-├── config/
-│   └── db.js              → conexão com MongoDB
-├── controllers/
-│   ├── usuarioController.js → cadastro e listagem de usuários
-│   ├── sensorController.js  → recebimento de dados dos sensores
-│   ├── salaController.js    → gerenciamento das salas
-│   ├── alertaController.js  → geração de alertas automáticos
-│   └── authController.js    → autenticação simples (login)
-├── models/
-│   ├── Usuario.js
-│   ├── SensorData.js
-│   ├── Sala.js
-│   └── Alerta.js
-├── routes/
-│   ├── usuarios.js
-│   ├── sensores.js
-│   ├── salas.js
-│   ├── alertas.js
-│   └── auth.js
-├── .env                     → variáveis de ambiente (não versionado)
-├── .gitignore               → protege .env e node_modules
-├── package.json
-└── server.js
+ ├── server.js
+ ├── mqtt/
+ │    └── client.js
+ ├── models/
+ │    ├── Sala.js
+ │    ├── Usuario.js
+ │    ├── SensorData.js
+ │    ├── Alerta.js
+ ├── controllers/
+ │    ├── salaController.js
+ │    ├── usuarioController.js
+ │    ├── authController.js
+ │    ├── sensorController.js
+ │    ├── alertaController.js
+ ├── routes/
+ │    ├── auth.js
+ │    ├── salas.js
+ │    ├── usuarios.js
+ │    ├── sensores.js   ← **NOVA ROTA**
+ │    ├── captura.js
+ │    ├── alertas.js
+ └── .env
+
 ```
+---
+# 📡 MQTT – Integração com ESP32
+
+### Tópicos Assinados
+- `ouviot/captura/dados` – ESP32 envia dados de ruído  
+- `ouviot/captura/comando` – comandos start/stop  
+- `ouviot/captura/sala` – sala ativa definida via app  
+
+### Comandos enviados pelo Backend
+- `"start"` → iniciar captura  
+- `"stop"` → parar captura  
+- `"nome-da-sala"` → associar leitura à sala correta  
 
 ---
 
-## 🚀 Como Executar o Servidor
 
 ### 🔧 1️⃣ Instalar dependências
 No terminal, dentro da pasta `backend`:
@@ -81,21 +122,22 @@ Se tudo estiver correto:
 🚀 Servidor rodando na porta 5000
 ```
 
+
 ---
 
 ## 📡 Endpoints Principais
 
-### 👤 **Usuários**
-| Método | Endpoint | Descrição |
-|--------|-----------|------------|
-| `POST` | `/api/usuarios` | Cadastrar novo usuário |
-| `GET` | `/api/usuarios` | Listar todos os usuários |
-| `DELETE` | `/api/usuarios` | Deletar usuário |
+## 👤 Usuários
+| Método | Rota | Descrição |
+|-------|------|-----------|
+| POST | `/usuarios` | Criar usuário |
+| GET | `/usuarios` | Listar usuários |
+| DELETE | `/usuarios/:email` | Remover usuário |
 
-### 🔐 **Login**
-| Método | Endpoint | Descrição |
-|--------|-----------|------------|
-| `POST` | `/api/login` | Autenticar usuário (sem JWT) |
+## 🔐 Autenticação
+| Método | Rota | Descrição |
+|-------|------|-----------|
+| POST | `/auth/login` | Login do usuário |
 
 Exemplo de corpo:
 ```json
@@ -104,12 +146,36 @@ Exemplo de corpo:
   "senha": "123456"
 }
 ```
+## 🏫 Salas
+| Método | Rota | Descrição |
+|-------|------|-----------|
+| GET | `/salas` | Listar salas |
+| POST | `/salas` | Criar nova sala |
+| DELETE | `/salas/:nome` | Remover sala |
 
-### 🎧 **Sensores**
-| Método | Endpoint | Descrição |
-|--------|-----------|------------|
-| `POST` | `/api/sensores` | Receber dados de som (enviados pelo ESP32) |
-| `GET` | `/api/sensores` | Listar últimas medições |
+---
+
+## 📊 Dados do Sensor – Para o gráfico
+| Método | Rota | Descrição |
+|-------|------|-----------|
+| GET | `/sensores/ultimos/:sala` | Retorna os últimos 20 valores de dB da sala |
+
+---
+
+## 📡 Captura (Mobile → Backend → ESP32 via MQTT)
+| Método | Rota | Descrição |
+|-------|------|-----------|
+| POST | `/captura/iniciar` | Inicia a captura de ruído |
+| POST | `/captura/parar` | Para a captura |
+| POST | `/captura/selecionar-sala` | Define a sala ativa |
+
+---
+
+## 🚨 Alertas
+| Método | Rota | Descrição |
+|-------|------|-----------|
+| GET | `/alertas` | Lista alertas gerais |
+| GET | `/alertas/sala/:sala` | Lista alertas da sala |
 
 ---
 

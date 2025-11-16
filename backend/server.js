@@ -1,52 +1,41 @@
-// mqtt/client.js
-import mqtt from "mqtt";
-import SensorData from "../models/SensorData.js";
-import Alerta from "../models/Alerta.js";
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import mongoose from "mongoose";
 
-const MQTT_URL = "mqtt://20.80.105.137:1883";
-const client = mqtt.connect(MQTT_URL);
+import authRoutes from "./routes/auth.js";
+import salasRoutes from "./routes/salas.js";
+import usuariosRoutes from "./routes/usuarios.js";
+import sensoresRoutes from "./routes/sensores.js";
+import capturaRoutes from "./routes/captura.js";
+import alertasRoutes from "./routes/alertas.js";
 
-client.on("connect", () => {
-  console.log("📡 MQTT conectado!");
+import "./mqtt/client.js"; // inicia MQTT automaticamente
 
-  client.subscribe("ouviot/captura/dados");
-  client.subscribe("ouviot/captura/comando");
-  client.subscribe("ouviot/captura/sala");
-});
+dotenv.config();
 
-// Recebendo mensagens do ESP32
-client.on("message", async (topic, message) => {
-  const payload = message.toString();
-  console.log(`📩 MQTT ${topic}: ${payload}`);
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-  if (topic === "ouviot/captura/dados") {
-    try {
-      const dados = JSON.parse(payload);
+// Rotas principais
+app.use("/auth", authRoutes);
+app.use("/salas", salasRoutes);
+app.use("/usuarios", usuariosRoutes);
+app.use("/sensores", sensoresRoutes);
+app.use("/captura", capturaRoutes);
+app.use("/alertas", alertasRoutes);
 
-      // 1️⃣ Salva leitura geral
-      await SensorData.create({
-        sala: dados.sala,
-        db: dados.db,
-        status: dados.status,
-        criadoEm: new Date(),
-      });
+// Porta
+const PORT = process.env.PORT || 5000;
 
-      // 2️⃣ Salva alerta separado (se necessário)
-      if (dados.status === "alert" || dados.status === "high") {
-        await Alerta.create({
-          sala: dados.sala,
-          db: dados.db,
-          status: dados.status,
-          criadoEm: new Date(),
-        });
-      }
-
-      console.log("💾 Dados salvos no MongoDB!");
-
-    } catch (error) {
-      console.error("❌ Erro ao processar MQTT:", error);
-    }
-  }
-});
-
-export default client;
+// Conectar ao MongoDB
+mongoose
+  .connect(process.env.MONGO_URL)
+  .then(() => {
+    console.log("🍃 MongoDB conectado!");
+    app.listen(PORT, () => {
+      console.log(`🚀 Servidor rodando na porta ${PORT}`);
+    });
+  })
+  .catch((err) => console.log("Erro ao conectar MongoDB:", err));

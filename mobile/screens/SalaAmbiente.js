@@ -15,38 +15,42 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import HeaderPadrao from "../components/HeaderPadrao";
 import api from "../services/api";
-import { Dropdown } from "react-native-element-dropdown"; 
+import { Dropdown } from "react-native-element-dropdown";
+import { LineChart } from "react-native-chart-kit";
 
 export default function SalaAmbiente({ navigation }) {
   const [usuario, setUsuario] = useState("");
   const [salas, setSalas] = useState([]);
   const [turma, setTurma] = useState("");
+
   const [capturando, setCapturando] = useState(false);
   const [nivelRuido, setNivelRuido] = useState(0);
+  const [dadosGrafico, setDadosGrafico] = useState([]);
+
   const [animBarras] = useState(new Animated.Value(0));
   const [menuVisivel, setMenuVisivel] = useState(false);
 
-  // Carrega o usuário logado do AsyncStorage
+  // Carrega usuário logado
   useEffect(() => {
     AsyncStorage.getItem("usuario").then((nome) => {
       if (nome) setUsuario(nome);
     });
   }, []);
 
-  // Busca salas no banco de dados (MongoDB Atlas via API)
+  // Carrega salas do backend
   useEffect(() => {
     const carregarSalas = async () => {
       try {
         const { data } = await api.get("/salas");
         setSalas(data);
       } catch (err) {
-        console.error("Erro ao carregar salas:", err.response?.data || err.message);
+        console.log("Erro ao carregar salas:", err);
       }
     };
     carregarSalas();
   }, []);
 
-  // Animação das barras do equalizador
+  // Equalizador animado
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
@@ -66,19 +70,28 @@ export default function SalaAmbiente({ navigation }) {
     ).start();
   }, []);
 
-  // Simula a captura de som enquanto o modo está ativo
+  // POLLING: Buscar dados da sala a cada 2s enquanto captura estiver ligada
   useEffect(() => {
     let intervalo;
-    if (capturando) {
-      intervalo = setInterval(() => {
-        const ruidoSimulado = Math.floor(Math.random() * 90);
-        setNivelRuido(ruidoSimulado);
-      }, 1000);
-    }
-    return () => clearInterval(intervalo);
-  }, [capturando]);
 
-  // Alturas animadas do equalizador
+    if (capturando && turma) {
+      intervalo = setInterval(async () => {
+        try {
+          const { data } = await api.get(`/sensores/ultimos/${turma}`);
+          if (data.length > 0) {
+            setNivelRuido(data[0].db);
+            setDadosGrafico(data.map((item) => item.db));
+          }
+        } catch (err) {
+          console.log("Erro ao buscar dados:", err);
+        }
+      }, 2000);
+    }
+
+    return () => clearInterval(intervalo);
+  }, [capturando, turma]);
+
+  // Alturas dinâmicas do equalizador
   const alturas = [
     animBarras.interpolate({ inputRange: [0, 1], outputRange: [40, 80] }),
     animBarras.interpolate({ inputRange: [0, 1], outputRange: [70, 20] }),
@@ -87,19 +100,44 @@ export default function SalaAmbiente({ navigation }) {
     animBarras.interpolate({ inputRange: [0, 1], outputRange: [30, 70] }),
   ];
 
+  // Iniciar captura → backend publica MQTT
+  const iniciarCaptura = async () => {
+    if (!turma) {
+      alert("Selecione uma turma!");
+      return;
+    }
+
+    try {
+      await api.post("/captura/selecionar-sala", { sala: turma });
+      await api.post("/captura/iniciar");
+
+      setCapturando(true);
+    } catch (err) {
+      console.log("Erro ao iniciar captura:", err);
+      alert("Erro ao iniciar captura.");
+    }
+  };
+
+  // Parar captura
+  const pararCaptura = async () => {
+    try {
+      await api.post("/captura/parar");
+      setCapturando(false);
+    } catch (err) {
+      console.log("Erro ao parar captura:", err);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Barra de status do sistema — cor padrão do dispositivo */}
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
 
       <View style={styles.container}>
-        {/* Cabeçalho padronizado */}
         <HeaderPadrao titulo="Sala Ambiente" onMenuPress={() => setMenuVisivel(true)} />
 
-        {/* Nome do usuário logado */}
         <Text style={styles.usuario}>{usuario}</Text>
 
-        {/* Menu lateral */}
+        {/* MENU LATERAL */}
         <Modal
           transparent
           visible={menuVisivel}
@@ -109,90 +147,60 @@ export default function SalaAmbiente({ navigation }) {
           <View style={styles.menuFundo}>
             <TouchableOpacity
               style={StyleSheet.absoluteFill}
-              activeOpacity={1}
               onPress={() => setMenuVisivel(false)}
             />
             <View style={styles.menuContainer}>
-              {[
-                "Login",
-                "SalaAmbiente",
-                "Gamificacao",
-                "Relatorios",
-                "Cadastro",
-                "Configuracoes",
-              ].map((tela, i) => (
-                <TouchableOpacity
-                  key={i}
-                  onPress={() => {
-                    setMenuVisivel(false);
-                    navigation.navigate(tela);
-                  }}
-                  style={styles.menuItem}
-                >
-                  <Text style={styles.menuTexto}>
-                    {tela === "Login"
-                      ? "🏠 Home"
-                      : tela === "SalaAmbiente"
-                      ? "▶️ Sala Ambiente"
-                      : tela === "Gamificacao"
-                      ? "🎮 Gamificação"
-                      : tela === "Relatorios"
-                      ? "📊 Relatórios"
-                      : tela === "Cadastro"
-                      ? "🧾 Cadastro"
-                      : "⚙️ Configurações"}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {["Login", "SalaAmbiente", "Gamificacao", "Relatorios", "Cadastro", "Configuracoes"].map(
+                (tela, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    onPress={() => {
+                      setMenuVisivel(false);
+                      navigation.navigate(tela);
+                    }}
+                    style={styles.menuItem}
+                  >
+                    <Text style={styles.menuTexto}>{tela}</Text>
+                  </TouchableOpacity>
+                )
+              )}
             </View>
           </View>
         </Modal>
 
-        {/* Seletor de turma/sala */}
+        {/* DROPDOWN DE SALAS */}
         <View style={styles.dropdownContainer}>
           <Text style={styles.subtitulo}>Selecionar turma atual:</Text>
+
           <Dropdown
             style={styles.dropdown}
             data={salas.map((s) => ({ label: s.nome, value: s.nome }))}
             labelField="label"
             valueField="value"
             placeholder="Selecione uma turma"
-            placeholderStyle={{ color: "#888" }}
-            selectedTextStyle={{ color: "#333", fontWeight: "bold" }}
-            itemTextStyle={{ color: "#333" }}
-            activeColor="#EEE"
             value={turma}
             onChange={(item) => setTurma(item.value)}
           />
         </View>
 
-        {turma === "nova" && (
-          <TouchableOpacity
-            style={styles.botaoCadastro}
-            onPress={() => navigation.navigate("Cadastro")}
-          >
-            <Text style={styles.textoCadastro}>Ir para Cadastro de Turma</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Botões principais */}
+        {/* BOTÕES */}
         <View style={styles.botoesContainer}>
           <TouchableOpacity
             style={[styles.botao, { backgroundColor: "#8AC926" }]}
-            onPress={() => setCapturando(true)}
+            onPress={iniciarCaptura}
           >
             <Text style={styles.textoBotao}>▶️ Iniciar Captura</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.botao, { backgroundColor: "#FF595E" }]}
-            onPress={() => setCapturando(false)}
+            onPress={pararCaptura}
           >
             <Text style={styles.textoBotao}>⏸️ Parar Captura</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Equalizador dinâmico */}
+        {/* EQUALIZADOR */}
         {capturando && (
           <View style={styles.equalizadorContainer}>
             <Text style={styles.nivelTexto}>Nível de ruído: {nivelRuido} dB</Text>
@@ -213,7 +221,37 @@ export default function SalaAmbiente({ navigation }) {
           </View>
         )}
 
-        {/* Botão gamificação */}
+        {/* GRÁFICO */}
+        {capturando && (
+          <View style={{ marginTop: 40 }}>
+            <Text style={{ color: "#6A4C93", marginBottom: 10, fontWeight: "bold" }}>
+              Últimos valores capturados (dB)
+            </Text>
+
+            <LineChart
+              data={{
+                labels: dadosGrafico.map(() => ""),
+                datasets: [{ data: dadosGrafico }],
+              }}
+              width={320}
+              height={170}
+              yAxisSuffix="dB"
+              chartConfig={{
+                backgroundColor: "#fff",
+                backgroundGradientFrom: "#fff",
+                backgroundGradientTo: "#fff",
+                decimalPlaces: 0,
+                color: () => "#6A4C93",
+                labelColor: () => "#6A4C93",
+                propsForDots: { r: "3" },
+              }}
+              bezier
+              style={{ borderRadius: 10 }}
+            />
+          </View>
+        )}
+
+        {/* GAMIFICAÇÃO */}
         <TouchableOpacity
           style={styles.botaoGamificacao}
           onPress={() => navigation.navigate("Gamificacao")}
@@ -221,7 +259,7 @@ export default function SalaAmbiente({ navigation }) {
           <Text style={styles.textoBotao}>🎮 Ir para Gamificação</Text>
         </TouchableOpacity>
 
-        {/* Botão voltar */}
+        {/* VOLTAR */}
         <TouchableOpacity style={styles.voltarBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-undo-circle" size={45} color="#6A4C93" />
         </TouchableOpacity>
@@ -230,18 +268,14 @@ export default function SalaAmbiente({ navigation }) {
   );
 }
 
-/*  Estilos */
+/* -- STYLES -- */
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#FBFCF5",
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
   },
-  container: {
-    flex: 1,
-    backgroundColor: "#FBFCF5",
-    alignItems: "center",
-  },
+  container: { flex: 1, alignItems: "center", backgroundColor: "#FBFCF5" },
   usuario: {
     position: "absolute",
     top: 80,
@@ -268,12 +302,8 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   menuItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: "#eee" },
-  menuTexto: { fontSize: 16, color: "#6A4C93", fontWeight: "600" },
-  subtitulo: { fontSize: 16, color: "#6A4C93", marginBottom: 10 },
-  dropdownContainer: {
-    width: "85%",
-    marginVertical: 20,
-  },
+  menuTexto: { fontSize: 16, color: "#6A4C93" },
+  dropdownContainer: { width: "85%", marginVertical: 20 },
   dropdown: {
     width: "100%",
     backgroundColor: "#fff",
@@ -284,13 +314,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     elevation: 2,
   },
-  botaoCadastro: {
-    backgroundColor: "#FFCA3A",
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  textoCadastro: { color: "#333", fontWeight: "600" },
+  subtitulo: { fontSize: 16, color: "#6A4C93", marginBottom: 10 },
   botoesContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -306,7 +330,7 @@ const styles = StyleSheet.create({
   },
   textoBotao: { color: "#fff", fontWeight: "bold" },
   equalizadorContainer: { alignItems: "center", marginTop: 40 },
-  nivelTexto: { fontSize: 16, color: "#333", marginBottom: 10 },
+  nivelTexto: { fontSize: 16, marginBottom: 10, color: "#333" },
   barras: {
     flexDirection: "row",
     alignItems: "flex-end",
@@ -323,9 +347,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 90,
   },
-  voltarBtn: {
-    position: "absolute",
-    bottom: 30,
-    left: 30,
-  },
+  voltarBtn: { position: "absolute", bottom: 30, left: 30 },
 });
