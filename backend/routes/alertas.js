@@ -3,7 +3,7 @@ import { listarAlertas, listarAlertasPorSala } from "../controllers/alertaContro
 
 const router = express.Router();
 
-// Lista todos os alertas
+// Lista todos os alertas 
 router.get("/", listarAlertas);
 
 // Lista alertas de uma sala específica

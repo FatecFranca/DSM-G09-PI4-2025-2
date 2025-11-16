@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-
+ 
 const AlertaSchema = new mongoose.Schema({
   sala: { type: String, required: true },
   db: { type: Number, required: true },

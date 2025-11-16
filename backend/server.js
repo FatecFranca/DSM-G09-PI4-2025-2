@@ -26,10 +26,10 @@ app.use("/sensores", sensoresRoutes);
 app.use("/captura", capturaRoutes);
 app.use("/alertas", alertasRoutes);
 
-// Porta
+//Porta
 const PORT = process.env.PORT || 5000;
 
-// Conectar ao MongoDB
+// Conectar  ao MongoDB
 mongoose
   .connect(process.env.MONGO_URL)
   .then(() => {

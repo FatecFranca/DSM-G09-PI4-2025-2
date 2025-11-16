@@ -23,7 +23,7 @@ client.on("message", async (topic, message) => {
     if (topic === "ouviot/captura/dados") {
       const dados = JSON.parse(payload);
 
-    // 1️ Salvar em SensorData (histórico completo)
+    // 1️ Salvar em SensorData (histórico completo) 
       await SensorData.create({
         sala: dados.sala,
         db: dados.db,

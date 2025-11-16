@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-
+ 
 const SalaSchema = new mongoose.Schema({
   nome: { type: String, required: true },
   professor: { type: String },

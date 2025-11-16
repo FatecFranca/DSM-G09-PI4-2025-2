@@ -8,7 +8,7 @@ import {
 
 const router = express.Router();
 
-router.get("/", listarSalas);        // Listar salas
+router.get("/", listarSalas);        // Listar salas 
 router.post("/", criarSala);         // Criar sala
 router.delete("/:nome", deletarSala);  // Excluir sala por nome
 

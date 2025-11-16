@@ -8,7 +8,7 @@ import {
 
 const router = express.Router();
 
-router.post("/", criarUsuario);       // Cadastrar usuário
+router.post("/", criarUsuario);       // Cadastrar usuário 
 router.get("/", listarUsuarios);      // Listar usuários
 router.delete("/:email", deletarUsuarioPorEmail); // Excluir usuário por e-mail
 

@@ -186,7 +186,7 @@ Após o login, o frontend/mobile pode armazenar os dados do usuário logado (`id
 - `AsyncStorage` (versão Mobile)
 
 Exemplo de resposta:
-```json
+```json 
 {
   "message": "Login realizado com sucesso!",
   "usuario": {

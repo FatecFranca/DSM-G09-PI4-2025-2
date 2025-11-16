@@ -3,7 +3,7 @@ import client from "../mqtt/client.js";
 
 const router = express.Router();
 
-// Iniciar captura
+// Iniciar captura 
 router.post("/iniciar", (req, res) => {
   client.publish("ouviot/captura/comando", "start");
   res.json({ ok: true, msg: "Captura iniciada" });

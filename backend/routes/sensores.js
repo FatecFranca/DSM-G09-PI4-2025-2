@@ -3,7 +3,7 @@ import SensorData from "../models/SensorData.js";
 
 const router = express.Router();
 
-// Últimos 20 dados da sala
+// Últimos 20 dados da sala 
 router.get("/ultimos/:sala", async (req, res) => {
   try {
     const sala = req.params.sala;
