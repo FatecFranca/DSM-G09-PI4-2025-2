@@ -18,7 +18,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Rotas principais
+// Rotas principais - atualizadas
 app.use("/auth", authRoutes);
 app.use("/salas", salasRoutes);
 app.use("/usuarios", usuariosRoutes);
