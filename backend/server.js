@@ -29,7 +29,7 @@ app.use("/alertas", alertasRoutes);
 //Porta
 const PORT = process.env.PORT || 5000;
 
-// Conectar  ao MongoDB
+// Conectar ao MongoDB
 mongoose
   .connect(process.env.MONGO_URL)
   .then(() => {
