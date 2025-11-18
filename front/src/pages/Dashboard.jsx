@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  AreaChart,
-  Area,
   XAxis,
   YAxis,
   Tooltip,
@@ -52,8 +50,9 @@ export default function Dashboard() {
     setSalaSelecionada(nomeSala);
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/sensores/historico/${nomeSala}`)
-;
+      const response = await fetch(
+        `http://localhost:5000/sensores/historico/${nomeSala}`
+      );
       const data = await response.json();
       // backend devolve array de registros de SensorData
       setDados(data || []);
@@ -73,13 +72,47 @@ export default function Dashboard() {
     tempoCritico: "--",
     silencio: "--",
     desvioPadrao: "--",
+    tipo: "--",
+    skewness: "--",
   };
 
   if (dados.length) {
-    const valores = dados.map((d) => d.db);
-    const total = valores.reduce((acc, v) => acc + v, 0);
-    const mediaNum = total / valores.length;
+    let valores = dados.map((d) => d.db).sort((a, b) => a - b);
 
+    // ---- MÉDIA ----
+    const total = valores.reduce((acc, v) => acc + v, 0);
+    const media = total / valores.length;
+
+    // ---- DESVIO PADRÃO ----
+    const variancia =
+      valores.reduce((acc, v) => acc + Math.pow(v - media, 2), 0) /
+      valores.length;
+    const desvioStd = Math.sqrt(variancia);
+
+    // ---- ASSIMETRIA (Skewness) ----
+    let skewness = 0;
+    if (desvioStd !== 0) {
+      skewness =
+        valores.reduce((acc, v) => acc + Math.pow(v - media, 3), 0) /
+        valores.length /
+        Math.pow(desvioStd, 3);
+    }
+
+    // ---- MEDIANA ----
+    let mediana;
+    const mid = Math.floor(valores.length / 2);
+    if (valores.length % 2 === 0) {
+      mediana = (valores[mid - 1] + valores[mid]) / 2;
+    } else {
+      mediana = valores[mid];
+    }
+
+    // ---- DECISÃO ----
+    // |skewness| > 1 → distribuição distorcida → usar MEDIANA
+    const nivelFinal = Math.abs(skewness) > 1 ? mediana : media;
+    const tipoFinal = Math.abs(skewness) > 1 ? "Mediana" : "Média";
+
+    // ---- INDICADORES JÁ EXISTENTES ----
     const pico = Math.max(...valores);
 
     const tempoCritico = Math.round(
@@ -90,28 +123,26 @@ export default function Dashboard() {
       (valores.filter((v) => v < 55).length / valores.length) * 100
     );
 
-    const variancia =
-      valores.reduce((acc, v) => acc + Math.pow(v - mediaNum, 2), 0) /
-      valores.length;
-    const dp = Math.sqrt(variancia);
-    const desvioPadrao = Math.round((dp / mediaNum) * 100);
+    const desvioPadrao = Math.round((desvioStd / media) * 100);
 
     resumo = {
-      media: Math.round(mediaNum),
+      media: Math.round(nivelFinal),
+      tipo: tipoFinal,
       pico: pico,
       tempoCritico,
       silencio,
       desvioPadrao,
+      skewness: skewness.toFixed(3),
+      mediana: Math.round(mediana),
     };
   }
 
   // ====== Últimas 50 capturas para gráfico de linha (índice) ======
-    const ultimos50 = dados
-      .slice(-50)
-      .map((d, index) => ({ indice: index + 1, ruido: d.db }));
+  const ultimos50 = dados
+    .slice(-50)
+    .map((d, index) => ({ indice: index + 1, ruido: d.db }));
 
-
-  // ====== Distribuição de níveis (ideal / atenção / crítico) ======
+  // ====== Distribuição de níveis ======
   const distribuicao =
     dados.length > 0
       ? [
@@ -130,7 +161,7 @@ export default function Dashboard() {
         ]
       : [{ name: "Sem dados", value: 1 }];
 
-  // ====== Variação diária (Seg–Sex) — min, média, max ======
+  // ====== Variação diária ======
   const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
   const agrupado = {};
 
@@ -163,7 +194,6 @@ export default function Dashboard() {
           Selecione uma sala para visualizar os dados sonoros.
         </p>
 
-        {/* Dropdown de seleção */}
         <select
           className="mt-6 bg-white/60 border border-black/10 rounded-xl px-6 py-3 text-lg font-medium shadow-sm hover:shadow-md transition-all"
           onChange={(e) => handleSelecionarSala(e.target.value)}
@@ -218,24 +248,27 @@ export default function Dashboard() {
 
       {/* Cards principais */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+
+        {/* Nível médio */}
         <div className="card text-center p-5 bg-[#E7F9DF]/80">
-          <p className="text-sm opacity-70">Nível Médio</p>
+          <p className="text-sm opacity-70">
+            Nível {resumo.tipo} (Skew: {resumo.skewness})
+          </p>
           <h3 className="text-3xl font-bold text-[#8AC926]">
             {resumo.media} dB
           </h3>
         </div>
 
-        <div className="card text-center p-5 bg-[#ffd39ea0]"> 
+        <div className="card text-center p-5 bg-[#ffd39ea0]">
           <p className="text-sm opacity-70">Pico Máximo</p>
           <h3 className="text-3xl font-bold text-red-600">
             {Math.round(resumo.pico)} dB
           </h3>
         </div>
 
-
         <div className="card text-center p-5 bg-[#FFE5E5]/80">
           <p className="text-sm opacity-70">Tempo Crítico (&gt; 60 dB)</p>
-          <h3 className="text-3xl font-bold  text-red-600">
+          <h3 className="text-3xl font-bold text-red-600">
             {resumo.tempoCritico}%
           </h3>
         </div>
@@ -254,103 +287,143 @@ export default function Dashboard() {
           </h3>
         </div>
       </div>
+{/* Alerta de assimetria */}
+{resumo.skewness !== "--" && (
+  <div className="mt-4">
+    {Math.abs(resumo.skewness) > 1 ? (
+      <div className="p-4 rounded-xl bg-red-100 border border-red-300 shadow-sm">
+        <p className="text-red-700 font-semibold">
+          ⚠️ Distribuição Assimétrica Detectada
+        </p>
+        <p className="text-red-600 text-sm mt-1">
+          A presença de picos elevados está distorcendo a média (Skew:{" "}
+          {resumo.skewness}).  
+          Por isso, o sistema está usando <strong>Mediana</strong> como medida principal.
+        </p>
+      </div>
+    ) : (
+      <div className="p-4 rounded-xl bg-green-100 border border-green-300 shadow-sm">
+        <p className="text-green-700 font-semibold">
+          🟢 Distribuição Equilibrada
+        </p>
+        <p className="text-green-600 text-sm mt-1">
+          A distribuição é estável (Skew: {resumo.skewness}).  
+          A <strong>Média</strong> é uma medida confiável neste cenário.
+        </p>
+      </div>
+    )}
+  </div>
+)}
 
-              {/* 📉 Variação Sonora - Gráfico de Linha (últimas 50 capturas) */}
-          <div className="card p-6 bg-white/70 col-span-1">
-            <h3 className="text-xl font-semibold mb-4">
-              📉 Variação Sonora - Últimas 50 capturas
-            </h3>
+      {/* 📉 Variação Sonora */}
+      <div className="card p-6 bg-white/70 col-span-1">
+        <h3 className="text-xl font-semibold mb-4">
+          📉 Variação Sonora - Últimas 50 capturas
+        </h3>
 
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart
-                data={ultimos50}
-                margin={{ top: 20, right: 30, bottom: 5, left: 0 }}
-              >             
-                <CartesianGrid strokeDasharray="3 3" stroke="#ccc" />
-                <XAxis
-                  dataKey="indice"
-                  tick={{ fontSize: 12 }}
-                  label={{ value: "Capturas", position: "insideBottomRight", offset: -5 }}
-                />
-                <YAxis
-                  domain={[50, 60]}              //  intervalo mínimo e máximo do eixo Y
-                  allowDataOverflow={true}       //  permite mostrar pontos fora do range se precisar
-                  tick={{ fontSize: 12 }}
-                  label={{
-                    value: "Ruído (dB)",
-                    angle: -90,
-                    position: "insideLeft",
-                    offset: 10,
-                  }}
-                />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="ruido"
-                  stroke="#6A4C93"
-                  strokeWidth={3}
-                  dot={{ r: 4, fill: "#6A4C93" }}
-                  activeDot={{ r: 6 }}
-                  label={{
-                    formatter: (value) => value.toFixed(1),
-                    position: "top",
-                    fontSize: 12,
-                  }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart
+            data={ultimos50}
+            margin={{ top: 20, right: 30, bottom: 5, left: 0 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#ccc" />
+            <XAxis
+              dataKey="indice"
+              tick={{ fontSize: 12 }}
+              label={{
+                value: "Capturas",
+                position: "insideBottomRight",
+                offset: -5,
+              }}
+            />
+            <YAxis
+              domain={[45, 70]}
+              allowDataOverflow={true}
+              tick={{ fontSize: 12 }}
+              label={{
+                value: "Ruído (dB)",
+                angle: -90,
+                position: "insideLeft",
+                offset: 10,
+              }}
+            />
+            <Tooltip />
+            <Line
+              type="monotone"
+              dataKey="ruido"
+              stroke="#6A4C93"
+              strokeWidth={3}
+              dot={{ r: 4, fill: "#6A4C93" }}
+              activeDot={{ r: 6 }}
+              label={{
+                formatter: (value) => value.toFixed(1),
+                position: "top",
+                fontSize: 12,
+              }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
 
-
-      {/* Gráfico de pizza — distribuição dos níveis */}
+      {/* Pizza */}
       <div className="card p-6 bg-white/70 flex flex-col items-center">
         <h3 className="text-xl font-semibold mb-4">
           🎯 Distribuição de Níveis Sonoros
         </h3>
-       <ResponsiveContainer width="100%" height={300}>
-  <PieChart>
-    <Pie
-      data={distribuicao}
-      dataKey="value"
-      nameKey="name"
-      cx="50%"
-      cy="50%"
-      outerRadius={110}
-      label={({ name, value }) => {
-        const total = distribuicao.reduce((acc, d) => acc + d.value, 0);
-        const percent = total ? ((value / total) * 100).toFixed(1) : 0;
-        return `${name}: ${percent}%`;
-      }}
-    >
-      {distribuicao.map((entry, index) => (
-        <Cell
-          key={`cell-${index}`}
-          fill={COLORS[index % COLORS.length]}
-        />
-      ))}
-    </Pie>
 
-    <Tooltip
-      formatter={(value) => {
-        const total = distribuicao.reduce((acc, d) => acc + d.value, 0);
-        const percent = total ? ((value / total) * 100).toFixed(1) : 0;
-        return `${percent}%`;
-      }}
-    />
-  </PieChart>
-</ResponsiveContainer>
+        <ResponsiveContainer width="100%" height={300}>
+          <PieChart>
+            <Pie
+              data={distribuicao}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius={110}
+              label={({ name, value }) => {
+                const total = distribuicao.reduce(
+                  (acc, d) => acc + d.value,
+                  0
+                );
+                const percent = total
+                  ? ((value / total) * 100).toFixed(1)
+                  : 0;
+                return `${name}: ${percent}%`;
+              }}
+            >
+              {distribuicao.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={COLORS[index % COLORS.length]}
+                />
+              ))}
+            </Pie>
 
+            <Tooltip
+              formatter={(value) => {
+                const total = distribuicao.reduce(
+                  (acc, d) => acc + d.value,
+                  0
+                );
+                const percent = total
+                  ? ((value / total) * 100).toFixed(1)
+                  : 0;
+                return `${percent}%`;
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
       </div>
 
-      {/* Gráfico de barras — variação diária (Seg–Sex) */}
+      {/* Barras */}
       <div className="card p-6 bg-white/70">
-        <h3 className="text-xl font-semibold mb-4">
-          📊 Variação Diária(dB)
-        </h3>
+        <h3 className="text-xl font-semibold mb-4">📊 Variação Diária(dB)</h3>
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={barrasSemana}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="dia" />
+            <XAxis data
+
+Key="dia" />
             <YAxis />
             <Tooltip />
             <Legend />
