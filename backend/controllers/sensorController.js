@@ -6,22 +6,28 @@ export const registrarSom = async (req, res) => {
     const { sala, nivelRuido, sensorId } = req.body;
 
     const status =
-      nivelRuido < 50 ? "baixo" :
-      nivelRuido < 70 ? "moderado" : "alto";
+      nivelRuido < 55 ? "baixo" :
+      nivelRuido < 60 ? "moderado" : "alto";
 
     const novoRegistro = await SensorData.create({
       sala,
-      nivelRuido,
+      db: nivelRuido,
       sensorId,
       status
     });
 
-    if (nivelRuido >= 70) {
-      await Alerta.create({ sala, nivelRuido });
+    // Se o status for 'alert' ou 'high', crie um Alerta
+    if (status === "alert" || status === "high") {
+      
+      await Alerta.create({
+        sala,
+        db: nivelRuido,
+        status, // Salva "alert" ou "high"
+      });
     }
-
     res.status(201).json({ message: "Dados registrados", data: novoRegistro });
   } catch (error) {
+    console.error("ERRO AO REGISTRAR SOM:", error.message); 
     res.status(500).json({ error: error.message });
   }
 };

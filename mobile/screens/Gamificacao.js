@@ -69,14 +69,17 @@ export default function Gamificacao({ navigation }) {
     <SafeAreaView style={styles.safeArea}>
       {/* Barra de status do sistema — cor padrão do dispositivo */}
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+
       <View style={styles.container}>
-        <HeaderPadrao titulo="Gamificação" onMenuPress={() => {}} />
+        {/* Cabeçalho com botão de menu */}
+        <HeaderPadrao titulo="Gamificação" onMenuPress={() => setMenuVisivel(true)} />
+
+        {/* Nome do usuário no canto superior direito */}
+        <Text style={styles.usuario}>{usuario}</Text>
 
         <Text style={styles.titulo}>Desempenho Acústico da Turma</Text>
 
         <View style={styles.lottieContainer}>
-       {/* Nome do usuário logado */}
-        <Text style={styles.usuario}>{usuario}</Text>
 
         {/* Menu lateral */}
         <Modal
@@ -179,6 +182,7 @@ export default function Gamificacao({ navigation }) {
   );
 }
 
+// Configuração visual da tela
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -189,6 +193,39 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     backgroundColor: "#FBFCF5",
+  },
+    usuario: {
+    position: "absolute",
+    top: 80,
+    right: 25,
+    fontSize: 12,
+    color: "#6A4C93",
+    fontStyle: "italic",
+  },
+    menuFundo: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.1)",
+    justifyContent: "flex-start",
+    alignItems: "flex-end",
+    paddingTop: 70,
+    paddingRight: 15,
+  },
+  menuContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    width: 180,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  menuItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: "#eee" },
+  menuTexto: { fontSize: 16, color: "#6A4C93", fontWeight: "600" },
+  label: {
+    fontSize: 14,
+    color: "#6A4C93",
+    fontWeight: "bold",
+    marginTop: 15,
   },
   titulo: {
     fontSize: 20,
@@ -245,5 +282,14 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 30,
     left: 30,
+  },
+    dropdown: {
+    borderWidth: 1,
+    borderColor: "#CCC",
+    borderRadius: 10,
+    height: 45,
+    backgroundColor: "#fff",
+    paddingHorizontal: 10,
+    marginBottom: 15,
   },
 });

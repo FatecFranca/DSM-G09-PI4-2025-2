@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -15,7 +13,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Dropdown } from "react-native-element-dropdown"; 
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import HeaderPadrao from "../components/HeaderPadrao";
 import api from "../services/api";
 
@@ -24,7 +21,7 @@ export default function Configuracoes({ navigation }) {
   const [menuVisivel, setMenuVisivel] = useState(false);
   const [email, setEmail] = useState("");
   const [turmaDigitada, setTurmaDigitada] = useState("");
-  const [salas, setSalas] = useState([]); // ✅ Armazena salas vindas do backend
+  const [salas, setSalas] = useState([]); // Armazena salas vindas do backend
 
   // Estados do modal de confirmação
   const [confirmVisible, setConfirmVisible] = useState(false);
@@ -116,7 +113,7 @@ export default function Configuracoes({ navigation }) {
               onPress={() => setMenuVisivel(false)}
             />
             <View style={styles.menuContainer}>
-              {["SalaAmbiente", "Relatorios", "Gamificacao", "Cadastro"].map((tela, i) => (
+              {["Login", "Cadastro", "Configuracoes"].map((tela, i) => (
                 <TouchableOpacity
                   key={i}
                   onPress={() => {
@@ -126,13 +123,11 @@ export default function Configuracoes({ navigation }) {
                   style={styles.menuItem}
                 >
                   <Text style={styles.menuTexto}>
-                    {tela === "SalaAmbiente"
-                      ? "▶️ Sala Ambiente"
-                      : tela === "Relatorios"
-                      ? "📊 Relatórios"
-                      : tela === "Gamificacao"
-                      ? "🎮 Gamificação"
-                      : "🧾 Cadastro"}
+                    {tela === "Login"
+                      ? "🏠 Home"
+                      : tela === "Cadastro"
+                      ? "🧾 Cadastro"
+                      : "⚙️ Configurações"}
                   </Text>
                 </TouchableOpacity>
               ))}

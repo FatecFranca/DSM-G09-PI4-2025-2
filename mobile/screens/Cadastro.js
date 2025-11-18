@@ -13,7 +13,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import HeaderPadrao from "../components/HeaderPadrao"; 
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../services/api";
 export default function Cadastro({ navigation }) {
   // Estados de controle

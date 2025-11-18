@@ -1,6 +1,6 @@
 import Alerta from "../models/Alerta.js";
 
-//  Listar TODOS os alertas (já existe)
+//  Listar todos os alertas
 export const listarAlertas = async (req, res) => {
   try {
     const alertas = await Alerta.find().sort({ criadoEm: -1 }).limit(50);
@@ -10,13 +10,12 @@ export const listarAlertas = async (req, res) => {
   }
 };
 
-// Listar alertas de uma sala específica (NOVA ROTA)
+// Listar alertas de uma sala específica
 export const listarAlertasPorSala = async (req, res) => {
   try {
     const nomeSala = req.params.sala;
 
-    const alertas = await Alerta.find({ sala: nomeSala })
-                                .sort({ criadoEm: -1 });
+    const alertas = await Alerta.find({ sala: nomeSala }).sort({ criadoEm: -1 });
 
     res.json(alertas);
   } catch (error) {

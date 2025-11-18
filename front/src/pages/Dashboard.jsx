@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
@@ -10,6 +10,8 @@ import {
   Bar,
   Legend,
   PieChart,
+  LineChart,
+  Line,
   Pie,
   Cell,
   ResponsiveContainer,
@@ -35,7 +37,7 @@ export default function Dashboard() {
   useEffect(() => {
     const buscarSalas = async () => {
       try {
-        const response = await fetch("http://20.80.105.137:5000/api/salas");
+        const response = await fetch("http://localhost:5000/salas");
         const data = await response.json();
         setSalas(data);
       } catch (err) {
@@ -45,14 +47,16 @@ export default function Dashboard() {
     buscarSalas();
   }, []);
 
-  //  Buscar dados de uma sala
-  const handleSelecionarSala = async (idSala) => {
-    setSalaSelecionada(idSala);
+  //  Buscar dados de uma sala (todo histórico da sala)
+  const handleSelecionarSala = async (nomeSala) => {
+    setSalaSelecionada(nomeSala);
     setLoading(true);
     try {
-      const response = await fetch(`http://20.80.105.137:5000/api/salas/${idSala}`);
+      const response = await fetch(`http://localhost:5000/sensores/historico/${nomeSala}`)
+;
       const data = await response.json();
-      setDados(data.sensores || []); // caso não existam sensores, fica array vazio
+      // backend devolve array de registros de SensorData
+      setDados(data || []);
     } catch (err) {
       console.error("Erro ao buscar dados da sala:", err);
     } finally {
@@ -62,20 +66,93 @@ export default function Dashboard() {
 
   const COLORS = ["#8AC926", "#FFCA3A", "#FF595E"];
 
-  //  Calcula os valores resumidos (ou mostra "--" se não houver dados)
-  const resumo = {
-    media: dados.length ? Math.round(dados.reduce((acc, d) => acc + d.ruido, 0) / dados.length) : "--",
-    pico: dados.length ? Math.max(...dados.map((d) => d.ruido)) : "--",
-    tempoCritico: dados.length ? Math.round((dados.filter((d) => d.ruido > 75).length / dados.length) * 100) : "--",
-    silencio: dados.length ? Math.round((dados.filter((d) => d.ruido < 55).length / dados.length) * 100) : "--",
-    dosimetria: dados.length ? Math.round(dados.reduce((acc, d) => acc + d.ruido, 0) / 100) : "--",
+  // ====== RESUMO (histórico inteiro da sala) ======
+  let resumo = {
+    media: "--",
+    pico: "--",
+    tempoCritico: "--",
+    silencio: "--",
+    desvioPadrao: "--",
   };
 
-  const faixa = [
-    { name: "Silencioso", value: dados.filter((d) => d.ruido < 55).length },
-    { name: "Moderado", value: dados.filter((d) => d.ruido >= 55 && d.ruido <= 75).length },
-    { name: "Crítico", value: dados.filter((d) => d.ruido > 75).length },
-  ];
+  if (dados.length) {
+    const valores = dados.map((d) => d.db);
+    const total = valores.reduce((acc, v) => acc + v, 0);
+    const mediaNum = total / valores.length;
+
+    const pico = Math.max(...valores);
+
+    const tempoCritico = Math.round(
+      (valores.filter((v) => v > 60).length / valores.length) * 100
+    );
+
+    const silencio = Math.round(
+      (valores.filter((v) => v < 55).length / valores.length) * 100
+    );
+
+    const variancia =
+      valores.reduce((acc, v) => acc + Math.pow(v - mediaNum, 2), 0) /
+      valores.length;
+    const dp = Math.sqrt(variancia);
+    const desvioPadrao = Math.round((dp / mediaNum) * 100);
+
+    resumo = {
+      media: Math.round(mediaNum),
+      pico: pico,
+      tempoCritico,
+      silencio,
+      desvioPadrao,
+    };
+  }
+
+  // ====== Últimas 50 capturas para gráfico de linha (índice) ======
+    const ultimos50 = dados
+      .slice(-50)
+      .map((d, index) => ({ indice: index + 1, ruido: d.db }));
+
+
+  // ====== Distribuição de níveis (ideal / atenção / crítico) ======
+  const distribuicao =
+    dados.length > 0
+      ? [
+          {
+            name: "Ideal",
+            value: dados.filter((d) => d.db < 55).length,
+          },
+          {
+            name: "Atenção",
+            value: dados.filter((d) => d.db >= 55 && d.db <= 60).length,
+          },
+          {
+            name: "Crítico",
+            value: dados.filter((d) => d.db > 61).length,
+          },
+        ]
+      : [{ name: "Sem dados", value: 1 }];
+
+  // ====== Variação diária (Seg–Sex) — min, média, max ======
+  const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  const agrupado = {};
+
+  dados.forEach((d) => {
+    const dia = diasSemana[new Date(d.criadoEm).getDay()];
+    if (!agrupado[dia]) agrupado[dia] = [];
+    agrupado[dia].push(d.db);
+  });
+
+  const diasUteis = ["Seg", "Ter", "Qua", "Qui", "Sex"];
+  const barrasSemana = diasUteis.map((dia) => {
+    const valores = agrupado[dia] || [];
+    if (!valores.length) {
+      return { dia, min: 0, med: 0, max: 0 };
+    }
+    const min = Math.round(Math.min(...valores));
+    const max = Math.round(Math.max(...valores));
+    const med = Math.round(
+      valores.reduce((acc, v) => acc + v, 0) / valores.length
+    );
+    return { dia, min, med, max };
+  });
 
   //  Caso nenhuma sala ainda tenha sido selecionada
   if (!salaSelecionada) {
@@ -96,7 +173,7 @@ export default function Dashboard() {
             Escolher sala...
           </option>
           {salas.map((sala) => (
-            <option key={sala._id} value={sala._id}>
+            <option key={sala._id} value={sala.nome}>
               {sala.nome}
             </option>
           ))}
@@ -109,7 +186,9 @@ export default function Dashboard() {
   if (loading) {
     return (
       <section className="container-max py-10">
-        <h2 className="text-3xl font-bold gradient-text mb-6">Painel Sonoro</h2>
+        <h2 className="text-3xl font-bold gradient-text mb-6">
+          Painel Sonoro
+        </h2>
         <Loader />
       </section>
     );
@@ -121,7 +200,7 @@ export default function Dashboard() {
       {/* Cabeçalho + seletor */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <h2 className="text-3xl font-bold gradient-text">
-          Painel Sonoro — {salas.find((s) => s._id === salaSelecionada)?.nome}
+          Painel Sonoro - {salaSelecionada}
         </h2>
 
         <select
@@ -130,7 +209,7 @@ export default function Dashboard() {
           onChange={(e) => handleSelecionarSala(e.target.value)}
         >
           {salas.map((sala) => (
-            <option key={sala._id} value={sala._id}>
+            <option key={sala._id} value={sala.nome}>
               {sala.nome}
             </option>
           ))}
@@ -141,75 +220,144 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <div className="card text-center p-5 bg-[#E7F9DF]/80">
           <p className="text-sm opacity-70">Nível Médio</p>
-          <h3 className="text-3xl font-bold text-[#8AC926]">{resumo.media} dB</h3>
+          <h3 className="text-3xl font-bold text-[#8AC926]">
+            {resumo.media} dB
+          </h3>
         </div>
 
-        <div className="card text-center p-5 bg-[#FFF6D6]/80">
+        <div className="card text-center p-5 bg-[#ffd39ea0]"> 
           <p className="text-sm opacity-70">Pico Máximo</p>
-          <h3 className="text-3xl font-bold text-[#FFCA3A]">{resumo.pico} dB</h3>
+          <h3 className="text-3xl font-bold text-red-600">
+            {Math.round(resumo.pico)} dB
+          </h3>
         </div>
 
-        <div className="card text-center p-5 bg-[#FFE9E9]/80">
-          <p className="text-sm opacity-70">Tempo Crítico</p>
-          <h3 className="text-3xl font-bold text-[#FF595E]">
+
+        <div className="card text-center p-5 bg-[#FFE5E5]/80">
+          <p className="text-sm opacity-70">Tempo Crítico (&gt; 60 dB)</p>
+          <h3 className="text-3xl font-bold  text-red-600">
             {resumo.tempoCritico}%
           </h3>
         </div>
 
         <div className="card text-center p-5 bg-[#EAF6FF]/80">
-          <p className="text-sm opacity-70">Índice de Silêncio</p>
-          <h3 className="text-3xl font-bold text-[#1982C4]">{resumo.silencio}%</h3>
+          <p className="text-sm opacity-70">Índice de Silêncio (&lt; 55 dB)</p>
+          <h3 className="text-3xl font-bold text-[#1982C4]">
+            {resumo.silencio}%
+          </h3>
         </div>
 
         <div className="card text-center p-5 bg-[#F3E8FF]/80">
-          <p className="text-sm opacity-70">Dosimetria Sonora</p>
+          <p className="text-sm opacity-70">Desvio Padrão</p>
           <h3 className="text-3xl font-bold text-[#6A4C93]">
-            {resumo.dosimetria}%
+            {resumo.desvioPadrao}%
           </h3>
         </div>
       </div>
 
-      {/* Gráfico de linha */}
-      <div className="card p-6 bg-white/70">
+              {/* 📉 Variação Sonora - Gráfico de Linha (últimas 50 capturas) */}
+          <div className="card p-6 bg-white/70 col-span-1">
+            <h3 className="text-xl font-semibold mb-4">
+              📉 Variação Sonora - Últimas 50 capturas
+            </h3>
+
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart
+                data={ultimos50}
+                margin={{ top: 20, right: 30, bottom: 5, left: 0 }}
+              >             
+                <CartesianGrid strokeDasharray="3 3" stroke="#ccc" />
+                <XAxis
+                  dataKey="indice"
+                  tick={{ fontSize: 12 }}
+                  label={{ value: "Capturas", position: "insideBottomRight", offset: -5 }}
+                />
+                <YAxis
+                  domain={[50, 60]}              //  intervalo mínimo e máximo do eixo Y
+                  allowDataOverflow={true}       //  permite mostrar pontos fora do range se precisar
+                  tick={{ fontSize: 12 }}
+                  label={{
+                    value: "Ruído (dB)",
+                    angle: -90,
+                    position: "insideLeft",
+                    offset: 10,
+                  }}
+                />
+                <Tooltip />
+                <Line
+                  type="monotone"
+                  dataKey="ruido"
+                  stroke="#6A4C93"
+                  strokeWidth={3}
+                  dot={{ r: 4, fill: "#6A4C93" }}
+                  activeDot={{ r: 6 }}
+                  label={{
+                    formatter: (value) => value.toFixed(1),
+                    position: "top",
+                    fontSize: 12,
+                  }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+
+      {/* Gráfico de pizza — distribuição dos níveis */}
+      <div className="card p-6 bg-white/70 flex flex-col items-center">
         <h3 className="text-xl font-semibold mb-4">
-          📈 Variação Sonora — {salas.find((s) => s._id === salaSelecionada)?.nome}
+          🎯 Distribuição de Níveis Sonoros
         </h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={dados.length ? dados : [{ hora: "", ruido: 0 }]}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="hora" />
-            <YAxis domain={[50, 90]} />
-            <Tooltip />
-            <Line type="monotone" dataKey="ruido" stroke="#6A4C93" strokeWidth={3} dot={!dados.length} />
-          </LineChart>
-        </ResponsiveContainer>
-        {!dados.length && (
-          <p className="text-center text-sm text-gray-500 mt-2 italic">
-            Nenhum dado encontrado para esta sala.
-          </p>
-        )}
+       <ResponsiveContainer width="100%" height={300}>
+  <PieChart>
+    <Pie
+      data={distribuicao}
+      dataKey="value"
+      nameKey="name"
+      cx="50%"
+      cy="50%"
+      outerRadius={110}
+      label={({ name, value }) => {
+        const total = distribuicao.reduce((acc, d) => acc + d.value, 0);
+        const percent = total ? ((value / total) * 100).toFixed(1) : 0;
+        return `${name}: ${percent}%`;
+      }}
+    >
+      {distribuicao.map((entry, index) => (
+        <Cell
+          key={`cell-${index}`}
+          fill={COLORS[index % COLORS.length]}
+        />
+      ))}
+    </Pie>
+
+    <Tooltip
+      formatter={(value) => {
+        const total = distribuicao.reduce((acc, d) => acc + d.value, 0);
+        const percent = total ? ((value / total) * 100).toFixed(1) : 0;
+        return `${percent}%`;
+      }}
+    />
+  </PieChart>
+</ResponsiveContainer>
+
       </div>
 
-      {/* Gráfico de pizza */}
-      <div className="card p-6 bg-white/70 flex flex-col items-center">
-        <h3 className="text-xl font-semibold mb-4">🎯 Distribuição de Níveis Sonoros</h3>
-        <ResponsiveContainer width="100%" height={250}>
-          <PieChart>
-            <Pie
-              data={dados.length ? faixa : [{ name: "Sem dados", value: 1 }]}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              outerRadius={80}
-              label
-            >
-              {(dados.length ? faixa : [{ name: "Sem dados", value: 1 }]).map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
+      {/* Gráfico de barras — variação diária (Seg–Sex) */}
+      <div className="card p-6 bg-white/70">
+        <h3 className="text-xl font-semibold mb-4">
+          📊 Variação Diária(dB)
+        </h3>
+        <ResponsiveContainer width="100%" height={280}>
+          <BarChart data={barrasSemana}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="dia" />
+            <YAxis />
             <Tooltip />
-          </PieChart>
+            <Legend />
+            <Bar dataKey="min" name="Mínimo" fill="#8AC926" />
+            <Bar dataKey="med" name="Médio" fill="#FFCA3A" />
+            <Bar dataKey="max" name="Máximo" fill="#FF595E" />
+          </BarChart>
         </ResponsiveContainer>
       </div>
     </section>

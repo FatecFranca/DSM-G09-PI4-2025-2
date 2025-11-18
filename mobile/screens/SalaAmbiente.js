@@ -30,6 +30,14 @@ export default function SalaAmbiente({ navigation }) {
   const [animBarras] = useState(new Animated.Value(0));
   const [menuVisivel, setMenuVisivel] = useState(false);
 
+  const safeNumber = (n) => {
+  if (n === null || n === undefined) return 0;
+  if (typeof n !== "number") n = Number(n);
+  if (!isFinite(n)) return 0;
+  return n;
+};
+
+
   // Carrega usuário logado
   useEffect(() => {
     AsyncStorage.getItem("usuario").then((nome) => {
@@ -79,8 +87,10 @@ export default function SalaAmbiente({ navigation }) {
         try {
           const { data } = await api.get(`/sensores/ultimos/${turma}`);
           if (data.length > 0) {
-            setNivelRuido(data[0].db);
-            setDadosGrafico(data.map((item) => item.db));
+            setNivelRuido(safeNumber(data[0].db));
+
+            setDadosGrafico(data.map((item) => safeNumber(item.db)));
+
           }
         } catch (err) {
           console.log("Erro ao buscar dados:", err);
@@ -137,36 +147,47 @@ export default function SalaAmbiente({ navigation }) {
 
         <Text style={styles.usuario}>{usuario}</Text>
 
-        {/* MENU LATERAL */}
-        <Modal
-          transparent
-          visible={menuVisivel}
-          animationType="fade"
-          onRequestClose={() => setMenuVisivel(false)}
-        >
-          <View style={styles.menuFundo}>
-            <TouchableOpacity
-              style={StyleSheet.absoluteFill}
-              onPress={() => setMenuVisivel(false)}
-            />
-            <View style={styles.menuContainer}>
-              {["Login", "SalaAmbiente", "Gamificacao", "Relatorios", "Cadastro", "Configuracoes"].map(
-                (tela, i) => (
-                  <TouchableOpacity
-                    key={i}
-                    onPress={() => {
-                      setMenuVisivel(false);
-                      navigation.navigate(tela);
-                    }}
-                    style={styles.menuItem}
-                  >
-                    <Text style={styles.menuTexto}>{tela}</Text>
-                  </TouchableOpacity>
-                )
-              )}
-            </View>
-          </View>
-        </Modal>
+        {/*  MENU LATERAL */}
+                <Modal
+                  transparent
+                  visible={menuVisivel}
+                  animationType="fade"
+                  onRequestClose={() => setMenuVisivel(false)}
+                >
+                  <View style={styles.menuFundo}>
+                    <TouchableOpacity
+                      style={StyleSheet.absoluteFill}
+                      activeOpacity={1}
+                      onPress={() => setMenuVisivel(false)}
+                    />
+                    <View style={styles.menuContainer}>
+                      {["Login", "SalaAmbiente", "Gamificacao", "Relatorios", "Cadastro", "Configuracoes"].map((tela, i) => (
+                        <TouchableOpacity
+                          key={i}
+                          onPress={() => {
+                            setMenuVisivel(false);
+                            navigation.navigate(tela);
+                          }}
+                          style={styles.menuItem}
+                        >
+                          <Text style={styles.menuTexto}>
+                            {tela === "Login"
+                              ? "🏠 Home"
+                              : tela === "SalaAmbiente"
+                              ? "▶️ Sala Ambiente"
+                              : tela === "Gamificacao"
+                              ? "🎮 Gamificação"
+                              : tela === "Relatorios"
+                              ? "📊 Relatórios"
+                              : tela === "Cadastro"
+                              ? "🧾 Cadastro"
+                              : "⚙️ Configurações"}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                </Modal>
 
         {/* DROPDOWN DE SALAS */}
         <View style={styles.dropdownContainer}>
@@ -221,35 +242,42 @@ export default function SalaAmbiente({ navigation }) {
           </View>
         )}
 
-        {/* GRÁFICO */}
-        {capturando && (
-          <View style={{ marginTop: 40 }}>
-            <Text style={{ color: "#6A4C93", marginBottom: 10, fontWeight: "bold" }}>
-              Últimos valores capturados (dB)
-            </Text>
 
-            <LineChart
-              data={{
-                labels: dadosGrafico.map(() => ""),
-                datasets: [{ data: dadosGrafico }],
-              }}
-              width={320}
-              height={170}
-              yAxisSuffix="dB"
-              chartConfig={{
-                backgroundColor: "#fff",
-                backgroundGradientFrom: "#fff",
-                backgroundGradientTo: "#fff",
-                decimalPlaces: 0,
-                color: () => "#6A4C93",
-                labelColor: () => "#6A4C93",
-                propsForDots: { r: "3" },
-              }}
-              bezier
-              style={{ borderRadius: 10 }}
-            />
-          </View>
-        )}
+          {/* GRÁFICO */}
+          {capturando && dadosGrafico.length === 0 && (
+            <View style={{ marginTop: 40, height: 170, justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={{ color: "#6A4C93" }}>
+                Aguardando primeiros dados do sensor...
+              </Text>
+            </View>
+          )}
+          
+          {capturando && dadosGrafico.length > 0 && (
+          <View style={{ marginTop: 40 }}>
+              <LineChart
+                data={{
+                  labels: dadosGrafico.map(() => ""), 
+                  
+                  // 'dadosGrafico' não pode ser um array vazio
+                  datasets: [{ data: dadosGrafico }], 
+                }}
+                width={320}
+                height={170}
+                yAxisSuffix="dB"
+                chartConfig={{
+                  backgroundColor: "#fff",
+                  backgroundGradientFrom: "#fff",
+                  backgroundGradientTo: "#fff",
+                  decimalPlaces: 0,
+                  color: () => "#6A4C93",
+                  labelColor: () => "#6A4C93",
+                  propsForDots: { r: "3" },
+                }}
+                bezier
+                style={{ borderRadius: 10 }}
+              />
+            </View>
+          )}
 
         {/* GAMIFICAÇÃO */}
         <TouchableOpacity

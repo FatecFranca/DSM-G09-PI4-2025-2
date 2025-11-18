@@ -1,9 +1,6 @@
-// controllers/salaController.js
 import Sala from "../models/Sala.js";
 
-/**
- *  Lista todas as salas
- */
+// Lista todas as salas
 export const listarSalas = async (req, res) => {
   try {
     const salas = await Sala.find();
@@ -15,12 +12,10 @@ export const listarSalas = async (req, res) => {
   }
 };
 
-/**
- *  Cria uma nova sala
- */
+//Cria uma nova sala
 export const criarSala = async (req, res) => {
   try {
-    console.log("📦 Sala recebida:", req.body);
+    console.log("Sala recebida:", req.body);
     const { nome } = req.body;
 
     if (!nome)
@@ -41,12 +36,10 @@ export const criarSala = async (req, res) => {
   }
 };
 
-/**
- *  Exclui sala pelo ID (usado no Configurações)
- */
+//Exclui sala pelo ID (usado no Configurações)
 export const deletarSala = async (req, res) => {
   try {
-    const nomeSala = req.params.nome; // vem do endpoint /api/salas/:nome
+    const nomeSala = req.params.nome;
     const removida = await Sala.findOneAndDelete({ nome: { $regex: new RegExp(`^${nomeSala}$`, "i") } });
     if (!removida)
       return res.status(404).json({ message: "Sala não encontrada." });

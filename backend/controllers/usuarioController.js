@@ -2,12 +2,10 @@
 import Usuario from "../models/Usuario.js";
 import bcrypt from "bcryptjs";
 
-/**
- *  Cria novo usuário
- */
-export const criarUsuario = async (req, res) => {
+//Cria novo usuário
+  export const criarUsuario = async (req, res) => {
   try {
-    console.log("📦 Recebido do app:", req.body);
+    console.log("Recebido do app:", req.body);
     const { nome, email, senha } = req.body;
 
     const existente = await Usuario.findOne({ email });
@@ -31,9 +29,7 @@ export const criarUsuario = async (req, res) => {
   }
 };
 
-/**
- *  Lista todos os usuários (sem senha)
- */
+//Lista todos os usuários (sem senha)
 export const listarUsuarios = async (req, res) => {
   try {
     const usuarios = await Usuario.find().select("-senha");
@@ -45,9 +41,7 @@ export const listarUsuarios = async (req, res) => {
   }
 };
 
-/**
- *  Deleta usuário por e-mail (usado no Configurações)
- */
+//Deleta usuário por e-mail (usado no Configurações)
 export const deletarUsuarioPorEmail = async (req, res) => {
   try {
     const email = decodeURIComponent(req.params.email);

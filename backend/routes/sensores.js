@@ -19,4 +19,19 @@ router.get("/ultimos/:sala", async (req, res) => {
   }
 });
 
+// Histórico completo da sala
+router.get("/historico/:sala", async (req, res) => {
+  try {
+    const sala = req.params.sala;
+
+    const dados = await SensorData
+      .find({ sala })
+      .sort({ criadoEm: 1 });   // ordem cronológica
+
+    res.json(dados);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

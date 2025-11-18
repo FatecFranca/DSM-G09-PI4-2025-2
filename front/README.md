@@ -1,6 +1,8 @@
 # 💻 OuvIoT — Frontend
 
-Frontend do projeto **OuvIoT**, desenvolvido com **React + Vite**, estilizado com **TailwindCSS + DaisyUI**, e publicado automaticamente por **GitHub Actions** na plataforma **Netlify**.
+Frontend do projeto **OuvIoT**, desenvolvido com **React + Vite**, estilizado com **TailwindCSS + DaisyUI**.
+
+Esta interface Web fornece **painéis, relatórios e acompanhamento em tempo real** das capturas feitas pelo dispositivo IoT e pelo aplicativo mobile.
 
 ---
 
@@ -11,9 +13,8 @@ Frontend do projeto **OuvIoT**, desenvolvido com **React + Vite**, estilizado co
 | **Framework** | React + Vite |
 | **Estilização** | TailwindCSS 4 + DaisyUI |
 | **Roteamento** | React Router |
-| **CI/CD** | GitHub Actions |
-| **Hospedagem** | Netlify |
-| **Gerenciamento de Dependências** | NPM |
+| **Gráficos** | Recharts |
+| **Comunicação com API** | Fetch API / Axios-like |
 
 ---
 
@@ -21,14 +22,15 @@ Frontend do projeto **OuvIoT**, desenvolvido com **React + Vite**, estilizado co
 
 ```
 front/
- ├── public/              # Arquivos públicos
+ ├── public/
  ├── src/
- │    ├── assets/         # Imagens e ícones
- │    ├── components/     # Componentes reutilizáveis
- │    ├── pages/          # Páginas (Home, Sobre, Dashboard, etc.)
- │    ├── index.css       # Estilos globais
- │    ├── main.jsx        # Entrada da aplicação
- │    └── App.jsx         # Sistema de rotas
+ │    ├── assets/
+ │    ├── components/
+ │    ├── pages/
+ │    ├── services/
+ │    ├── index.css
+ │    ├── main.jsx
+ │    └── App.jsx
  ├── package.json
  ├── vite.config.js
  ├── tailwind.config.js
@@ -39,106 +41,48 @@ front/
 
 #  Como Rodar Localmente
 
-1️⃣ **Entre na pasta do projeto**
 ```bash
 cd front
-```
-
-2️⃣ **Instale as dependências**
-```bash
 npm install
-```
-
-3️⃣ **Inicie o servidor de desenvolvimento**
-```bash
 npm run dev
 ```
 
-4️⃣ Abra no navegador:
- http://localhost:5173
+Acesse:  
+👉 http://localhost:5173/
 
 ---
 
-# 🌐 Deploy Automático com Netlify + GitHub Actions
+# 📊 Painel Sonoro (Dashboard)
 
-Este projeto possui CI/CD completo:
+## 🔶 1. Indicadores principais
+- **Nível Médio**
+- **Pico Máximo**
+- **Tempo Crítico (> 60 dB)**
+- **Índice de Silêncio (≤ 55 dB)**
+- **Desvio Padrão (%)**
 
-### ✔️ Todo push na branch `main` dispara:
-1. Instala dependências  
-2. Roda `npm run build`  
-3. Gera o diretório `front/dist`  
-4. Envia automaticamente para o Netlify  
+## 🔶 2. Gráfico de Linha — Últimas 20 capturas  
+Faixa: 45 dB → 75 dB.
 
-###  Arquivo responsável: `.github/workflows/deploy-netlify.yml`
+## 🔶 3. Gráfico de Pizza — Distribuição  
+- Ideal (≤ 55 dB)  
+- Atenção (56–60 dB)  
+- Crítico (> 60 dB)  
 
-```yaml
-name: Deploy to Netlify
+Valores em **%**.
 
-on:
-  push:
-    branches:
-      - main
+## 🔶 4. Gráfico de Barras — Variação Diária  
+Seg–Sex: min / média / max.
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+---
 
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+# 📡 Sala Ambiente Live  
+Monitoramento em tempo real usando:
 
-      - name: Install Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install Netlify CLI
-        run: npm install -g netlify-cli
-
-      - name: Install dependencies
-        working-directory: ./front
-        run: npm install
-
-      - name: Build project
-        working-directory: ./front
-        run: npm run build
-
-      - name: Deploy to Netlify
-        run: netlify deploy --prod --dir=front/dist
-        env:
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+```
+GET /captura/status
 ```
 
 ---
-
-# ☁️ Hospedagem no Netlify
-
-O site está publicado em:
-
- **https://ouviot.netlify.app**
-
-### Configurações utilizadas:
-
-| Campo | Valor |
-|-------|------------|
-| **Base directory** | `front` |
-| **Build command** | `npm run build` |
-| **Publish directory** | `front/dist` |
-| **Node version** | 20.x |
-| **Functions directory** | *(vazio)* |
-
----
-
-# 🔐 Secrets do GitHub Necessários
-
-Crie em:  
-**GitHub → Settings → Secrets → Actions**
-
-| Nome | Valor |
-|------|-------|
-| `NETLIFY_AUTH_TOKEN` | Token criado em <br> https://app.netlify.com/user/applications |
-| `NETLIFY_SITE_ID` | Disponível em <br> Netlify → Site Settings → Site Information |
-
 
 

@@ -12,24 +12,18 @@ import {
   ActivityIndicator, // Componente nativo do React Native para mostrar "rodinha de carregamento"
 } from "react-native";
 
-// Importa o serviço de API (Axios configurado com o backend)
+
 import api from "../services/api";
-
-// Importa o AsyncStorage para salvar dados localmente (nome do usuário, etc.)
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
 // Importa o componente de gradiente para o fundo
 import { LinearGradient } from "expo-linear-gradient";
-
 // Componente principal de Login
 export default function Login({ navigation }) {
   // Estados para armazenar os campos digitados
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-
   // Estado que controla a animação do equalizador
   const [animBarras] = useState(new Animated.Value(0));
-
   // Estado que controla se a tela está carregando (rodinha visível)
   const [carregando, setCarregando] = useState(false);
 
@@ -63,7 +57,10 @@ export default function Login({ navigation }) {
     setCarregando(true); // Mostra o spinner enquanto a requisição é processada
 
     try {
-      const resposta = await api.post("/login", { email, senha });
+      const resposta = await api.post("/auth/login", { 
+          email: email.trim().toLowerCase(), 
+          senha: senha 
+          });
       const usuario = resposta.data.usuario;
 
       if (usuario) {
@@ -80,10 +77,9 @@ export default function Login({ navigation }) {
     }
   };
 
-  //  Navega para a tela de cadastro
+
   const handleCadastro = () => navigation.navigate("Cadastro");
 
-  //  Navega para a tela de configurações
   const handleConfiguracoes = () => {
     navigation.navigate("Configuracoes");
   };

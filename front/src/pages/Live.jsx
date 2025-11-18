@@ -9,11 +9,17 @@ export default function Live() {
   useEffect(() => {
     const verificarCaptura = async () => {
       try {
-        const response = await fetch("http://20.80.105.137:5000/api/salas/ativa"); 
-        //  endpoint retorna { ativa: true/false, turma: "2A" }
-        const data = await response.json();
-        setCapturaAtiva(data.ativa);
-        setTurma(data.turma || "");
+          const response = await fetch("http://localhost:5000/captura/status");
+          const data = await response.json();
+
+          setCapturaAtiva(data.ativa);
+          setTurma(data.turma || "");
+
+          // Atualiza o nível real vindo do mobile
+          if (data.nivel !== undefined) {
+            setNivel(data.nivel); 
+          }
+
       } catch (err) {
         console.error("Erro ao verificar captura ativa:", err);
       }
@@ -24,15 +30,29 @@ export default function Live() {
     return () => clearInterval(intervalo);
   }, []);
 
-  // Simula variação de som em tempo real
-  useEffect(() => {
-    if (capturaAtiva) {
-      const interval = setInterval(() => {
-        setNivel(Math.round(Math.random() * 40) + 50);
-      }, 500);
-      return () => clearInterval(interval);
-    }
-  }, [capturaAtiva]);
+  // Atualiza o nível em tempo real
+      useEffect(() => {
+        if (capturaAtiva && turma) {
+          const interval = setInterval(async () => {
+            try {
+              const resp = await fetch(`http://localhost:5000/sensores/ultimos/${turma}`);
+              const dados = await resp.json();
+
+              if (dados.length > 0) {
+                setNivel(dados[0].db);
+              }
+
+            } catch (err) {
+              console.error("Erro ao atualizar nível:", err);
+            }
+          }, 1000);
+
+          return () => clearInterval(interval);
+        }
+      }, [capturaAtiva, turma]);
+
+
+
 
   return (
     <section className="container-max py-16 text-center">
