@@ -77,3 +77,5 @@ Auxílio complementar e dúvidas com ferramentas de IA.
 ---
 
 💡 “O silêncio é o primeiro passo para ouvir melhor.”
+
+https://www.youtube.com/watch?v=ld6W-Z2sG24

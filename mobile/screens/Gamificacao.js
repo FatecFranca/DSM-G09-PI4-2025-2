@@ -79,6 +79,8 @@ export default function Gamificacao({ navigation }) {
 
         <Text style={styles.titulo}>Desempenho Acústico da Turma</Text>
 
+        <Text style={styles.titulo}>(em implantação, dados simulados)</Text>
+
         <View style={styles.lottieContainer}>
 
         {/* Menu lateral */}
@@ -130,23 +132,7 @@ export default function Gamificacao({ navigation }) {
           </View>
         </Modal>
 
-        {/* Seletor de turma/sala */}
-        <View style={styles.dropdownContainer}>
-          <Text style={styles.subtitulo}>Selecionar turma atual:</Text>
-          <Dropdown
-            style={styles.dropdown}
-            data={salas.map((s) => ({ label: s.nome, value: s.nome }))}
-            labelField="label"
-            valueField="value"
-            placeholder="Selecione uma turma"
-            placeholderStyle={{ color: "#888" }}
-            selectedTextStyle={{ color: "#333", fontWeight: "bold" }}
-            itemTextStyle={{ color: "#333" }}
-            activeColor="#EEE"
-            value={turma}
-            onChange={(item) => setTurma(item.value)}
-          />
-        </View>
+        
 
           <LottieView
             source={lottie}
