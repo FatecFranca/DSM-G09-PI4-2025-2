@@ -35,7 +35,7 @@ export default function Dashboard() {
   useEffect(() => {
     const buscarSalas = async () => {
       try {
-        const response = await fetch("http://localhost:5000/salas");
+        const response = await fetch("http://20.80.105.137:5000/salas");
         const data = await response.json();
         setSalas(data);
       } catch (err) {
@@ -51,7 +51,7 @@ export default function Dashboard() {
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:5000/sensores/historico/${nomeSala}`
+        `http://20.80.105.137:5000/sensores/historico/${nomeSala}`
       );
       const data = await response.json();
       // backend devolve array de registros de SensorData
@@ -156,7 +156,7 @@ export default function Dashboard() {
           },
           {
             name: "Crítico",
-            value: dados.filter((d) => d.db > 61).length,
+            value: dados.filter((d) => d.db > 60).length,
           },
         ]
       : [{ name: "Sem dados", value: 1 }];

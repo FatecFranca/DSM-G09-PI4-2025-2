@@ -9,7 +9,7 @@ export default function Live() {
   useEffect(() => {
     const verificarCaptura = async () => {
       try {
-          const response = await fetch("http://localhost:5000/captura/status");
+          const response = await fetch("http://20.80.105.137:5000/captura/status");
           const data = await response.json();
 
           setCapturaAtiva(data.ativa);
@@ -35,7 +35,7 @@ export default function Live() {
         if (capturaAtiva && turma) {
           const interval = setInterval(async () => {
             try {
-              const resp = await fetch(`http://localhost:5000/sensores/ultimos/${turma}`);
+              const resp = await fetch(`http://20.80.105.137:5000/sensores/ultimos/${turma}`);
               const dados = await resp.json();
 
               if (dados.length > 0) {

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const local = "http://192.168.100.7:5000/"; //  IP casa
+const local = "http://172.20.10.2:5000/"; //  IP casa
 
 const prod = "http://20.80.105.137:5000/";  // IP VM Azure
 

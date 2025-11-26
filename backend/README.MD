@@ -118,6 +118,7 @@ npm start
 
 Se tudo estiver correto:
 ```
+📡 MQTT conectado!
 ✅ Conectado ao MongoDB com sucesso!
 🚀 Servidor rodando na porta 5000
 ```

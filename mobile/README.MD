@@ -31,28 +31,15 @@ Antes de rodar o projeto:
 
 ## 🧩 Instalação do Projeto
 
-```bash
-# Clonar o repositório
-git clone <URL_DO_REPOSITORIO>
-cd ouviot-mobile
-
-# Instalar dependências
-npm install
-```
-
----
-
-## 📦 Dependências Necessárias
-
 Instale todas as dependências com os comandos abaixo:
 
 ```bash
-# Expo CLI
+# Expo
 npm install -g expo-cli
 
-# React Navigation
-npm install @react-navigation/native @react-navigation/stack
-npx expo install react-native-screens react-native-safe-area-context
+# React Navigation (todos os módulos que VOCÊ USA)
+npm install @react-navigation/native @react-navigation/stack @react-navigation/bottom-tabs @react-navigation/elements
+npx expo install react-native-screens react-native-safe-area-context react-native-gesture-handler react-native-reanimated
 
 # Armazenamento local
 npm install @react-native-async-storage/async-storage
@@ -60,18 +47,23 @@ npm install @react-native-async-storage/async-storage
 # Requisições HTTP
 npm install axios
 
+# Dropdowns
+npm install react-native-element-dropdown
+
+# Picker
+npm install @react-native-picker/picker
+
 # Animações e ícones
 npm install lottie-react-native
 npm install @expo/vector-icons
 
 # Gráficos
 npm install react-native-chart-kit react-native-svg
+npm install react-native-gifted-charts
 
-# Gradientes e utilitários do Expo
-npx expo install expo-linear-gradient expo-constants expo-status-bar
+# Dependências do Expo usadas no projeto
+npx expo install expo-linear-gradient expo-constants expo-status-bar expo-haptics expo-font expo-image expo-system-ui expo-linking expo-web-browser expo-splash-screen expo-symbols
 
-# (Opcional: feedback tátil)
-npx expo install expo-haptics
 ```
 
 ---
@@ -150,40 +142,12 @@ npx expo start
 | **Relatórios** | Apresenta histórico de ruído com gráfico de linha. |
 | **Configurações** | Permite limpar dados locais e exibe informações sobre o app. |
 
----
-
-## 💚 Paleta de Cores OuvIoT
-
-| Cor | Código | Significado |
-|------|---------|-------------|
-| 🟩 Verde | `#8AC926` | Silêncio / ambiente saudável |
-| 🟨 Amarelo | `#FFCA3A` | Atenção / ruído intermediário |
-| 🟥 Vermelho | `#FF595E` | Alerta / ruído alto |
-| 🟪 Roxo | `#6A4C93` | Destaque / identidade visual |
-| 🤍 Creme | `#FBFCF5` | Fundo claro e neutro |
 
 ---
 
 ## 🌐 Integração com Backend e Sensor ESP32
 
 O **OuvIoT Mobile** está preparado para integração com backend (Node.js/Express) e sensores de ruído (ESP32), que enviarão os níveis de som via API REST.
-
-### 🔹 Backend (Node.js / Express)
-
-O backend será responsável por:
-- Receber e armazenar dados dos sensores;
-- Gerenciar usuários e turmas;
-- Fornecer endpoints REST para o app.
-
-#### Endpoints previstos:
-
-| Método | Endpoint | Descrição |
-|--------|-----------|-----------|
-| `POST` | `/api/usuarios` | Cria um novo usuário |
-| `POST` | `/api/turmas` | Cadastra turma |
-| `GET` | `/api/sons/atual` | Retorna nível atual de ruído |
-| `GET` | `/api/relatorios/:turma` | Histórico de ruído da turma |
-| `GET` | `/api/ranking` | Ranking de turmas por desempenho |
 
 #### Serviço API no App:
 
@@ -202,22 +166,10 @@ Substitua `<IP_DO_SERVIDOR>` pelo IP local do backend.
 
 ---
 
-### 🔹 Sensor (ESP32 com microfone I2S)
+### Sensor (ESP32 com microfone I2S)
 
 Fluxo previsto:
 1. ESP32 coleta som ambiente;
 2. Envia dados de ruído (dB) via Wi-Fi para o backend;
 3. Backend grava e distribui via API;
 4. OuvIoT Mobile exibe valores e gamificação em tempo real.
-
----
-
-## 👩‍💻 Autora
-
-**Monica Aímola Falqueto**  
-📍 FATEC Franca – Curso **Desenvolvimento de Software Multiplataforma**  
-📚 Projeto Interdisciplinar: *OuvIoT – Tecnologia para Ambientes Educacionais Saudáveis*
-
----
-
-> 💬 *“Ambientes mais silenciosos, mentes mais atentas.”*  
