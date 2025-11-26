@@ -3,9 +3,26 @@ import { listarAlertas, listarAlertasPorSala } from "../controllers/alertaContro
 
 const router = express.Router();
 
-// Lista todos os alertas 
+
+/**
+ * @openapi
+ * /alertas:
+ *   get:
+ *     summary: Lista os últimos alertas
+ *     tags:
+ *       - Alertas
+ */ 
 router.get("/", listarAlertas);
 
+/**
+ * @openapi
+ * 
+ * /alertas/sala/{sala}:
+ *   get:
+ *     summary: Lista alertas filtrados por sala
+ *     tags:
+ *       - Alertas
+ */
 // Lista alertas de uma sala específica
 router.get("/sala/:sala", listarAlertasPorSala);
 

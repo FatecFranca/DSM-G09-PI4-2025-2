@@ -54,6 +54,7 @@ O objetivo geral é desenvolver um sistema IoT capaz de monitorar e analisar o s
 - **MQTT** - Comunicação em tempo real com o ESP32 para envio/recebimento de capturas.
 - **bcryptjs** – Hashing de senha.
 - **Swagger (OpenAPI)** – Documentação dos endpoints.  
+   | Disponível em http://localhost:5000/api-docs ou http://20.80.105.137:5000/api-docs |
 
 ---
 
@@ -91,7 +92,6 @@ Para instalação completa do projeto, cada subpasta(backend, front, mobile) con
 - 💙 **Azul (#1982C4)** → Equilíbrio e confiança  
 
 ---
-
 
 🏫 Sobre o Projeto
 

@@ -3,6 +3,15 @@ import SensorData from "../models/SensorData.js";
 
 const router = express.Router();
 
+/**
+ * @openapi
+ * /sensores/ultimos/{sala}:
+ *   get:
+ *     summary: Retorna os últimos 20 registros de ruído
+ *     tags:
+ *       - Sensores
+ *
+ */
 // Últimos 20 dados da sala 
 router.get("/ultimos/:sala", async (req, res) => {
   try {
@@ -19,6 +28,15 @@ router.get("/ultimos/:sala", async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * 
+  * /sensores/historico/{sala}:
+ *   get:
+ *     summary: Retorna histórico completo da sala
+ *     tags:
+ *       - Sensores
+ */
 // Histórico completo da sala
 router.get("/historico/:sala", async (req, res) => {
   try {

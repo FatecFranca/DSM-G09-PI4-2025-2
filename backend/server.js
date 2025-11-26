@@ -11,12 +11,14 @@ import capturaRoutes from "./routes/captura.js";
 import alertasRoutes from "./routes/alertas.js";
 
 import "./mqtt/client.js"; // inicia MQTT automaticamente
+import { swaggerUi, swaggerSpec } from "./swagger.js";
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Rotas principais
 app.use("/auth", authRoutes);
