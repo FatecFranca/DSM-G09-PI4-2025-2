@@ -10,7 +10,8 @@ const router = express.Router();
 
 /**
  * @openapi
- * *   post:
+ * /usuarios:
+ *   post:
  *     summary: Cria novo usuário
  *     tags:
  *       - Usuários

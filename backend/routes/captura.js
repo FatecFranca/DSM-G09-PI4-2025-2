@@ -22,7 +22,8 @@ const router = express.Router();
 router.post("/selecionar-sala", selecionarSala);
 
 /**
- * @openapi* /captura/iniciar:
+ * @openapi
+ *  /captura/iniciar:
  *   post:
  *     summary: Inicia captura (envia comando via MQTT)
  *     tags:
@@ -32,7 +33,7 @@ router.post("/iniciar", iniciarCaptura);
 
 /**
  * @openapi
-* /captura/parar:
+ * /captura/parar:
  *   post:
  *     summary: Para captura (MQTT)
  *     tags:
@@ -41,7 +42,8 @@ router.post("/iniciar", iniciarCaptura);
 router.post("/parar", pararCaptura);  
 
 /**
- * @openapi * /captura/status:
+ * @openapi 
+ * /captura/status:
  *   get:
  *     summary: Retorna status da captura
  *     tags:

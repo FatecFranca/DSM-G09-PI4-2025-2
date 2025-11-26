@@ -31,7 +31,7 @@ router.get("/ultimos/:sala", async (req, res) => {
 /**
  * @openapi
  * 
-  * /sensores/historico/{sala}:
+ * /sensores/historico/{sala}:
  *   get:
  *     summary: Retorna histórico completo da sala
  *     tags:

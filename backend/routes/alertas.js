@@ -15,8 +15,7 @@ const router = express.Router();
 router.get("/", listarAlertas);
 
 /**
- * @openapi
- * 
+ * @openapi 
  * /alertas/sala/{sala}:
  *   get:
  *     summary: Lista alertas filtrados por sala

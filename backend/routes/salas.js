@@ -23,6 +23,7 @@ router.get("/", listarSalas);        // Listar salas
 
 /**
  * @openapi
+ * /salas:
  *   post:
  *     summary: Cria uma nova sala
  *     tags:
